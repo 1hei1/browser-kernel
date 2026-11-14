@@ -132,6 +132,34 @@ def cmd_prepare(_args) -> None:
     run(["cmd", "/c", "gn.bat", "gen", OUT_REL], cwd=SRC)
     run(["cmd", "/c", "gn.bat", "args", OUT_REL, "--list", "--short", "--overrides-only"],
         cwd=SRC, check=False)
+    fill_missing_brand_sources()
+
+
+def fill_missing_brand_sources() -> None:
+    """The branding overlay sets branding_path_product = "mz", so GN asks for
+    files like chrome/installer/setup/mz_behaviors.cc that the overlay never
+    ships (upstream's tree evidently had them). Dry-run ninja, and for each
+    missing mz_* source copy its chromium_* sibling. Anything else fails here,
+    seconds after gn gen, instead of hours into the build."""
+    import re
+    pat = re.compile(r"'([^']+)', needed by '[^']+', missing and no known rule")
+    for _ in range(20):
+        r = subprocess.run([str(ninja_exe()), "-C", OUT_REL, "-n", "mini_installer"],
+                           cwd=SRC, capture_output=True, text=True, errors="replace")
+        m = pat.search(r.stdout + r.stderr)
+        if not m:
+            if r.returncode != 0:
+                print((r.stdout + r.stderr)[-4000:])
+                raise SystemExit("ninja dry run failed")
+            log("ninja dry run OK: no missing inputs")
+            return
+        missing = (OUT / m.group(1)).resolve()
+        sibling = missing.with_name(missing.name.replace("mz_", "chromium_", 1))
+        if "mz_" not in missing.name or not sibling.exists():
+            raise SystemExit(f"missing input with no chromium_ sibling: {missing}")
+        shutil.copyfile(sibling, missing)
+        log(f"created {missing.relative_to(SRC)} from {sibling.name}")
+    raise SystemExit("too many missing inputs")
 
 
 def retry_failed_patches(failures_json: Path, env: dict) -> None:
