@@ -123,13 +123,62 @@ def cmd_prepare(_args) -> None:
     env["PATH"] = env["PATH"] + os.pathsep + str(git_usr_bin)
     failures = WORK / "driver-failures.json"
     run(["uv", "run", "python", "-m", "driver", "validate"], cwd=KERNEL, env=env)
-    run(["uv", "run", "python", "-m", "driver", "--out-dir", OUT_REL,
-         "--failures-json", failures, "apply-and-prepare"], cwd=KERNEL, env=env)
+    r = run(["uv", "run", "python", "-m", "driver", "--out-dir", OUT_REL,
+             "--failures-json", failures, "apply-and-prepare"], cwd=KERNEL, env=env, check=False)
+    if r.returncode != 0:
+        retry_failed_patches(failures, env)
     print("---- final args.gn ----")
     print((OUT / "args.gn").read_text(encoding="utf-8"))
     run(["cmd", "/c", "gn.bat", "gen", OUT_REL], cwd=SRC)
     run(["cmd", "/c", "gn.bat", "args", OUT_REL, "--list", "--short", "--overrides-only"],
         cwd=SRC, check=False)
+
+
+def retry_failed_patches(failures_json: Path, env: dict) -> None:
+    """Git for Windows' GNU patch rejects a few hunks that apply cleanly with git apply
+    (seen: fingerprint/059 hunk 5 on 157.0.8103.51). For each failed plain .patch:
+    restore its target files from git, drop .rej files, re-apply with git apply,
+    then run the driver's own hunk verification. Anything else stays a failure."""
+    import json
+    sys.path.insert(0, str(KERNEL))
+    from driver.patching import parse_hunks, read_normalized_patch, verify_hunks_applied
+
+    items = json.loads(failures_json.read_text(encoding="utf-8"))
+    still_failed = []
+    for item in items:
+        label = item["label"]
+        parts = label.split("/")
+        if len(parts) != 3 or parts[0] != "overlay" or not label.endswith(".patch"):
+            still_failed.append(label)
+            continue
+        patch_file = KERNEL / "overlay" / parts[1] / "patches" / parts[2]
+        data = read_normalized_patch(patch_file)
+        hunks = parse_hunks(data.decode("utf-8"))
+        targets = sorted({h.target for h in hunks if h.target})
+        shared = [t for t in targets
+                  if any(t in q.read_text(encoding="utf-8", errors="replace")
+                         for q in (KERNEL / "overlay").glob("*/patches/*.patch*") if q != patch_file)]
+        if shared:
+            print(f"{label}: targets also patched elsewhere, not retrying: {shared}")
+            still_failed.append(label)
+            continue
+        for t in targets:
+            run(["git", "checkout", "--", t], cwd=SRC, check=False)
+            rej = SRC / (t + ".rej")
+            if rej.exists():
+                rej.unlink()
+        tmp = WORK / "retry.patch"
+        tmp.write_bytes(data)
+        r = subprocess.run(["git", "apply", "--verbose", "--whitespace=nowarn", str(tmp)],
+                           cwd=SRC, env=env)
+        problems = verify_hunks_applied(SRC, hunks) if r.returncode == 0 else ["git apply failed"]
+        if problems:
+            print("\n".join(problems))
+            still_failed.append(label)
+        else:
+            log(f"{label}: GNU patch failed, applied cleanly with git apply")
+    if still_failed:
+        raise SystemExit("patches still failing: " + ", ".join(still_failed))
 
 
 # ---------------------------------------------------------------- build
