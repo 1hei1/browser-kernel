@@ -228,12 +228,19 @@ def cmd_build(args) -> None:
         log("not enough time left, skipping ninja in this job")
         set_output("finished", "false")
         return
-    cmd = [str(ninja), "-C", OUT_REL, "-j", jobs, *BUILD_TARGETS]
+    cmd = [str(ninja), "-C", OUT_REL, "-j", jobs, "-k", "0", *BUILD_TARGETS]
     print("+", " ".join(cmd), flush=True)
     proc = subprocess.Popen(cmd, cwd=SRC, env=env_with_depot(),
                             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
     try:
         rc = proc.wait(timeout=remaining)
+        if rc != 0:
+            # mz targets may lack deps on generated headers (race): retry once
+            remaining = deadline - time.time()
+            log(f"ninja rc={rc}; retrying once (missing-generated-header races), {remaining/60:.0f} min left")
+            proc = subprocess.Popen(cmd, cwd=SRC, env=env_with_depot(),
+                                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+            rc = proc.wait(timeout=max(remaining, 60))
     except subprocess.TimeoutExpired:
         log("time budget reached, interrupting ninja (CTRL_BREAK) so it can save state")
         for _ in range(3):
