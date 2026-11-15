@@ -57,8 +57,12 @@ def finish_steps() -> str:
         if: steps.build.outputs.finished == 'false'
         run: |
           Set-Location $env:MZ_WORK
+          # 7z exit code 1 = warnings only (dangling symlinks such as node_modules/.bin, nearby includes); >= 2 is a real error
           7z a -t7z -m0=lzma2 -mx=1 -mmt=on -mtc=on "-xr!.git" tree.7z depot_tools chromium | Select-Object -Last 5
+          $rc = $LASTEXITCODE
           Get-Item tree.7z | Format-List Name, Length
+          if ($rc -gt 1) { throw "7z failed with exit code $rc" }
+          $global:LASTEXITCODE = 0
       - name: Upload work tree
         if: steps.build.outputs.finished == 'false'
         uses: actions/upload-artifact@v4
@@ -104,7 +108,10 @@ def main() -> None:
         run: |
           Set-Location $env:MZ_WORK
           7z x -y -mmt=on tree.7z | Select-Object -Last 3
+          $rc = $LASTEXITCODE
+          if ($rc -gt 1) { throw "7z failed with exit code $rc" }
           Remove-Item tree.7z
+          $global:LASTEXITCODE = 0
 '''
         y += f'''      - name: Build (ninja, time-boxed)
         id: build
