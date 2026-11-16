@@ -1,17 +1,21 @@
 name: mz-av-scan
 
 on:
+  push:
+    branches: ['ci/**']
+    paths: ['.github/workflows/mz-av-scan.yml']
   workflow_dispatch:
     inputs:
       build_run_id:
         description: 'Run id whose mz-kernel artifact to scan'
-        required: true
+        required: false
 
 permissions:
   actions: read
   contents: read
 
 env:
+  BUILD_RUN_ID: ${{ inputs.build_run_id || '43794432533' }}
   UPSTREAM_URL: https://github.com/mouzhai163/browser-kernel/releases/download/v157.0.8103.51-mz3/mz-browser-kernel-157.0.8103.51-win-x64.zip
 
 jobs:
@@ -22,7 +26,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: mz-kernel
-          run-id: ${{ inputs.build_run_id }}
+          run-id: ${{ inputs.build_run_id || '43794432533' }}
           github-token: ${{ github.token }}
           path: D:\scan\ours-artifact
       - name: Fetch upstream zip and extract both
@@ -77,7 +81,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: mz-kernel
-          run-id: ${{ inputs.build_run_id }}
+          run-id: ${{ inputs.build_run_id || '43794432533' }}
           github-token: ${{ github.token }}
           path: scan/ours-artifact
       - name: Prepare
