@@ -31,7 +31,12 @@ SRC = CHROMIUM / "src"
 OUT_REL = "out/Default"
 OUT = SRC / OUT_REL
 TAG = os.environ.get("CHROMIUM_TAG", "157.0.8103.51")
-BUILD_TARGETS = os.environ.get("MZ_TARGETS", "mini_installer").split()
+BUILD_TARGETS = os.environ.get(
+    "MZ_TARGETS",
+    # use_static_angle=true (the 157 default) links ANGLE into chrome.dll and
+    # mini_installer then skips libEGL/libGLESv2; upstream still ships the
+    # dummy stub DLLs, so build them explicitly.
+    "mini_installer ui/gl:generate_angle_stubs").split()
 
 
 def log(msg: str) -> None:
@@ -302,6 +307,30 @@ def cmd_package(_args) -> None:
         src = OUT / name
         if src.exists() and not (version_dir / name).exists():
             shutil.copy2(src, version_dir / name)
+
+    # Upstream's zip is assembled from the build dir, not only chrome.7z:
+    #  - chrome.release still names chrome.exe, so the renamed exe is skipped
+    #  - static ANGLE makes mini_installer skip the libEGL/libGLESv2 stubs
+    #  - the developer-build VisualElements manifest sits in VisualElements/
+    #  - no Extensions/external_extensions.json
+    exe = os.environ.get("MZ_EXE_NAME", "mz") + ".exe"
+    if not (OUT / exe).exists():
+        raise SystemExit(f"{exe} missing in build dir")
+    shutil.copy2(OUT / exe, stage / exe)
+    if exe != "chrome.exe":
+        (stage / "chrome.exe").unlink(missing_ok=True)
+    for name in ("libEGL.dll", "libGLESv2.dll"):
+        if not (OUT / name).exists():
+            raise SystemExit(f"{name} missing in build dir (ui/gl:generate_angle_stubs not built?)")
+        shutil.copy2(OUT / name, version_dir / name)
+    ve = version_dir / "VisualElements"
+    ve.mkdir(exist_ok=True)
+    shutil.copy2(OUT / "chrome.VisualElementsManifest.xml", ve / "chrome.VisualElementsManifest.xml")
+    (version_dir / "Extensions" / "external_extensions.json").unlink(missing_ok=True)
+    try:
+        (version_dir / "Extensions").rmdir()
+    except OSError:
+        pass
 
     zip_name = f"mz-browser-kernel-{TAG}-win-x64.zip"
     zip_path = dist / zip_name
