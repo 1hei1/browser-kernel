@@ -1,0 +1,100 @@
+name: mz-av-scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Run id whose mz-kernel artifact to scan'
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  UPSTREAM_URL: https://github.com/mouzhai163/browser-kernel/releases/download/v157.0.8103.51-mz3/mz-browser-kernel-157.0.8103.51-win-x64.zip
+
+jobs:
+  defender:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mz-kernel
+          run-id: ${{ inputs.build_run_id }}
+          github-token: ${{ github.token }}
+          path: D:\scan\ours-artifact
+      - name: Fetch upstream zip and extract both
+        shell: pwsh
+        run: |
+          Invoke-WebRequest $env:UPSTREAM_URL -OutFile D:\scan\upstream.zip
+          $ours = Get-ChildItem D:\scan\ours-artifact -Filter *.zip -Recurse | Select-Object -First 1
+          Copy-Item $ours.FullName D:\scan\ours.zip
+          Expand-Archive D:\scan\ours.zip D:\scan\ours
+          Expand-Archive D:\scan\upstream.zip D:\scan\upstream
+          Get-FileHash D:\scan\ours.zip, D:\scan\upstream.zip -Algorithm SHA256 | Format-Table -AutoSize | Out-String -Width 300
+      - name: Update Defender signatures
+        shell: pwsh
+        run: |
+          Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction SilentlyContinue
+          Update-MpSignature -ErrorAction Continue
+          Get-MpComputerStatus | Select-Object AMProductVersion, AntivirusSignatureVersion, AntivirusSignatureLastUpdated, RealTimeProtectionEnabled | Format-List | Out-String
+      - name: Defender scan (no remediation)
+        shell: pwsh
+        run: |
+          $mp = "$env:ProgramFiles\Windows Defender\MpCmdRun.exe"
+          $out = @("## Microsoft Defender")
+          foreach ($t in 'ours.zip','ours','upstream.zip','upstream') {
+            $p = "D:\scan\$t"
+            $log = & $mp -Scan -ScanType 3 -File $p -DisableRemediation 2>&1 | Out-String
+            Write-Host "===== $t (exit $LASTEXITCODE) ====="; Write-Host $log
+            $out += "- $t : exit $LASTEXITCODE  " + (($log -split "`n" | Where-Object { $_ -match 'Threat|found' }) -join ' | ')
+          }
+          $det = Get-MpThreatDetection -ErrorAction SilentlyContinue | Where-Object { ($_.Resources -join ' ') -match 'scan' }
+          $names = Get-MpThreat -ErrorAction SilentlyContinue | Select-Object ThreatID, ThreatName
+          Write-Host "Detections:"; $det | Format-List | Out-String -Width 300 | Write-Host
+          Write-Host "Threat names:"; $names | Format-Table -AutoSize | Out-String -Width 300 | Write-Host
+          $out += "", "Detections: $(@($det).Count)"
+          foreach ($d in $det) { $out += "- ThreatID $($d.ThreatID): $($d.Resources -join ', ')" }
+          foreach ($n in $names) { $out += "- $($n.ThreatID) = $($n.ThreatName)" }
+          $out -join "`n" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+      - name: Authenticode signatures of executables
+        shell: pwsh
+        run: |
+          foreach ($t in 'ours','upstream') {
+            Write-Host "===== $t ====="
+            Get-ChildItem "D:\scan\$t" -Recurse -Include *.exe,*.dll | ForEach-Object {
+              $s = Get-AuthenticodeSignature $_.FullName
+              "{0,-60} {1}" -f $_.FullName.Substring(9), $s.Status
+            } | Out-String -Width 300 | Write-Host
+          }
+
+  clamav:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mz-kernel
+          run-id: ${{ inputs.build_run_id }}
+          github-token: ${{ github.token }}
+          path: scan/ours-artifact
+      - name: Prepare
+        run: |
+          cd scan
+          curl -sSL -o upstream.zip "$UPSTREAM_URL"
+          cp "$(find ours-artifact -name '*.zip' | head -1)" ours.zip
+          unzip -q ours.zip -d ours && unzip -q upstream.zip -d upstream
+          sha256sum ours.zip upstream.zip
+      - name: ClamAV
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq clamav clamav-freshclam
+          sudo systemctl stop clamav-freshclam || true
+          sudo freshclam || sudo freshclam
+          cd scan
+          set +e
+          clamscan -r -i --max-filesize=500M --max-scansize=1000M ours upstream | tee clam.txt
+          echo "## ClamAV" >> "$GITHUB_STEP_SUMMARY"
+          sed 's/^/    /' clam.txt >> "$GITHUB_STEP_SUMMARY"
+          exit 0
