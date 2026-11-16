@@ -1,0 +1,22 @@
+# Base GN args for the MZ kernel Windows x64 CI build.
+# Inferred from the upstream v157.0.8103.51-mz3 binaries:
+#   chrome.dll version resource says "Official Build: 0"  -> is_official_build=false
+#   chrome.dll contains the "H.264 / AVC" ffmpeg decoder  -> proprietary_codecs + ffmpeg_branding="Chrome"
+#   no ffmpeg.dll in the package                          -> is_component_build=false
+# The branding overlay's deploy step (sync_gn_args) appends
+#   chrome_executable_name = "mz" and is_mz_branded = true
+# to this file before gn gen.
+target_os = "win"
+target_cpu = "x64"
+is_debug = false
+is_component_build = false
+is_official_build = false
+chrome_pgo_phase = 0
+symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
+dcheck_always_on = false
+proprietary_codecs = true
+ffmpeg_branding = "Chrome"
+treat_warnings_as_errors = false
+use_siso = false
