@@ -1,0 +1,52 @@
+diff --git a/mz/eventbus/BUILD.gn b/mz/eventbus/BUILD.gn
+index d7cd7eb..d0b42d0 100644
+--- a/mz/eventbus/BUILD.gn
++++ b/mz/eventbus/BUILD.gn
+@@ -22,6 +22,7 @@ source_set("eventbus") {
+   deps = [
+     "//base",
+     "//chrome/browser:browser_process",
++    "//mz/totp",
+   ]
+ 
+   # Windows Named Pipe 需要的库
+diff --git a/mz/eventbus/eventbus.cc b/mz/eventbus/eventbus.cc
+index 16d2770..1c4f8a7 100644
+--- a/mz/eventbus/eventbus.cc
++++ b/mz/eventbus/eventbus.cc
+@@ -3,6 +3,8 @@
+ 
+ #include "mz/eventbus/eventbus.h"
+ 
++#include "mz/totp/totp_store.h"
++
+ #include <algorithm>
+ #include <atomic>
+ #include <cstdint>
+@@ -1128,6 +1130,8 @@ void EventBus::HandleHandshakeResponse(const Message& message) {
+     // 处理账号导入
+     std::vector<password_manager::CSVPassword> csv_passwords;
+     std::vector<GURL> account_urls;
++    // 2FA：账号的 totp_secret 只保存在内存里，供新标签页显示验证码
++    std::vector<mz::totp::Account> totp_accounts;
+     const base::ListValue* accounts = config.FindList("accounts");
+     if (accounts && !accounts->empty()) {
+       MZ_LOG("LaunchConfig: 发现 " << accounts->size() << " 个账号，准备导入");
+@@ -1161,8 +1165,17 @@ void EventBus::HandleHandshakeResponse(const Message& message) {
+             password_manager::CSVPassword::Status::kOK);
+ 
+         account_urls.push_back(gurl);
++
++        const std::string* totp_secret = account.FindString("totp_secret");
++        if (totp_secret && !totp_secret->empty()) {
++          totp_accounts.push_back({*url, *username, *totp_secret});
++        }
+       }
+     }
++    if (!totp_accounts.empty()) {
++      MZ_LOG("LaunchConfig: " << totp_accounts.size() << " 个账号带 2FA 密钥");
++    }
++    mz::totp::SetAccounts(std::move(totp_accounts));
+ 
+     if (!launch_cookies.empty() || !csv_passwords.empty()) {
+       content::GetUIThreadTaskRunner({})->PostTask(

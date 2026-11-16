@@ -38,7 +38,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.h b/chrome/browser/ui/vi
    METADATA_HEADER(BrowserView, views::ClientView)
  
   public:
-@@ -688,6 +695,9 @@ class BrowserView : public BrowserWindow,
+@@ -691,6 +698,9 @@ class BrowserView : public BrowserWindow,
    void OnWidgetMove() override;
    views::Widget* GetWidget() override;
    const views::Widget* GetWidget() const override;
@@ -48,7 +48,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.h b/chrome/browser/ui/vi
    void GetAccessiblePanes(std::vector<View*>* panes) override;
    bool ShouldDescendIntoChildForEventHandling(
        gfx::NativeView child,
-@@ -719,6 +729,12 @@ class BrowserView : public BrowserWindow,
+@@ -722,6 +732,12 @@ class BrowserView : public BrowserWindow,
    // infobars::InfoBarContainer::Delegate:
    void InfoBarContainerStateChanged(bool is_animating) override;
  
@@ -61,7 +61,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.h b/chrome/browser/ui/vi
    // views::View:
    void Layout(PassKey) override;
    void OnGestureEvent(ui::GestureEvent* event) override;
-@@ -860,6 +876,24 @@ class BrowserView : public BrowserWindow,
+@@ -866,6 +882,24 @@ class BrowserView : public BrowserWindow,
    // web contents.
    void ShowSplitView(bool focus_active_view);
  
@@ -86,7 +86,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.h b/chrome/browser/ui/vi
    // Display only the current active tab's web contents, hiding any previous
    // side-by-side display.
    void HideSplitView();
-@@ -1207,6 +1241,19 @@ class BrowserView : public BrowserWindow,
+@@ -1205,6 +1239,19 @@ class BrowserView : public BrowserWindow,
  
    std::unique_ptr<TabSearchBubbleHost> tab_search_bubble_host_;
  

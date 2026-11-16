@@ -1,7 +1,7 @@
 diff --git a/chrome/common/webui_url_constants.h b/chrome/common/webui_url_constants.h
 --- a/chrome/common/webui_url_constants.h
 +++ b/chrome/common/webui_url_constants.h
-@@ -261,6 +261,8 @@
+@@ -263,6 +263,8 @@ inline constexpr char kChromeUIPageActionInternalsHost[] =
      "page-action-internals";
  inline constexpr char kChromeUIPageActionInternalsURL[] =
      "chrome://page-action-internals/";

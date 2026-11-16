@@ -34,6 +34,7 @@ class MzIpHandler : public mz_ip::mojom::MzIpHandler {
 
   // mz_ip::mojom::MzIpHandler:
   void GetIpInfo(GetIpInfoCallback callback) override;
+  void GetTotpCodes(GetTotpCodesCallback callback) override;
 
  private:
   // Tries the next IP API in the list.

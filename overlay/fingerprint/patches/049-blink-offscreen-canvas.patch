@@ -1,7 +1,7 @@
 diff --git a/third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc b/third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc
 --- a/third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc
 +++ b/third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc
-@@ -48,6 +48,9 @@
+@@ -49,6 +49,9 @@
  #include "third_party/blink/renderer/core/workers/dedicated_worker_global_scope.h"
  #include "third_party/blink/renderer/platform/bindings/exception_state.h"
  #include "third_party/blink/renderer/platform/fonts/plain_text_painter.h"
@@ -11,7 +11,7 @@ diff --git a/third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc
  #include "third_party/blink/renderer/platform/graphics/canvas_resource.h"
  #include "third_party/blink/renderer/platform/graphics/canvas_resource_dispatcher.h"
  #include "third_party/blink/renderer/platform/graphics/exported_canvas_resource.h"
-@@ -586,6 +589,19 @@
+@@ -570,6 +573,19 @@ ScriptPromise<Blob> OffscreenCanvas::convertToBlob(
    base::TimeTicks start_time = base::TimeTicks::Now();
    scoped_refptr<StaticBitmapImage> image_bitmap = context_->GetImage();
    if (image_bitmap) {

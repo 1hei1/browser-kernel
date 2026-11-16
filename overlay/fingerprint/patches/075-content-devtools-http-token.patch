@@ -97,7 +97,7 @@ diff --git a/content/browser/devtools/devtools_http_handler.cc b/content/browser
  bool RequestIsSafeToServe(const net::HttpServerRequestInfo& info) {
    // For browser-originating requests, serve only those that are coming from
    // pages loaded off localhost or fixed IPs.
-@@ -467,14 +539,21 @@ static std::string_view GetMimeType(std::string_view filename) {
+@@ -475,14 +547,21 @@ static std::string_view GetMimeType(std::string_view filename) {
    return "text/plain";
  }
  
@@ -122,7 +122,7 @@ diff --git a/content/browser/devtools/devtools_http_handler.cc b/content/browser
    server_->SetSendBufferSize(connection_id, kSendBufferSizeForDevTools);
  
    if (base::StartsWith(info.path, "/json", base::CompareCase::SENSITIVE)) {
-@@ -523,13 +602,19 @@ void ServerWrapper::OnHttpRequest(int connection_id,
+@@ -531,13 +610,19 @@ void ServerWrapper::OnHttpRequest(int connection_id,
  
  void ServerWrapper::OnWebSocketRequest(
      int connection_id,
@@ -144,7 +144,7 @@ diff --git a/content/browser/devtools/devtools_http_handler.cc b/content/browser
    GetUIThreadTaskRunner({})->PostTask(
        FROM_HERE, base::BindOnce(&DevToolsHttpHandler::OnWebSocketRequest,
                                  handler_, connection_id, request));
-@@ -634,7 +719,8 @@ void DevToolsHttpHandler::OnJsonRequest(
+@@ -642,7 +727,8 @@ void DevToolsHttpHandler::OnJsonRequest(
      std::string host = info.GetHeaderValue("host");
      version.Set(
          kTargetWebSocketDebuggerUrlField,
@@ -154,7 +154,7 @@ diff --git a/content/browser/devtools/devtools_http_handler.cc b/content/browser
  #if BUILDFLAG(IS_ANDROID)
      version.Set("Android-Package",
                  base::android::apk_info::host_package_name());
-@@ -937,6 +1023,7 @@ DevToolsHttpHandler::DevToolsHttpHandler(
+@@ -946,6 +1032,7 @@ DevToolsHttpHandler::DevToolsHttpHandler(
      const base::FilePath& debug_frontend_dir,
      DevToolsAgentHost::RemoteDebuggingServerMode mode)
      : mode_(mode), delegate_(delegate) {
@@ -162,7 +162,7 @@ diff --git a/content/browser/devtools/devtools_http_handler.cc b/content/browser
    browser_guid_ =
        delegate_->IsBrowserTargetDiscoverable()
            ? kBrowserUrlPrefix
-@@ -1084,8 +1171,9 @@ base::DictValue DevToolsHttpHandler::SerializeDescriptor(
+@@ -1093,8 +1180,9 @@ base::DictValue DevToolsHttpHandler::SerializeDescriptor(
      dictionary.Set(kTargetFaviconUrlField, favicon_url.spec());
  
    dictionary.Set(kTargetWebSocketDebuggerUrlField,

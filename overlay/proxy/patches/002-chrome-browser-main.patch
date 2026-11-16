@@ -9,7 +9,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
  #include "chrome/browser/startup_data.h"
  #include "chrome/browser/translate/chrome_translate_client.h"
  #include "chrome/browser/translate/translate_service.h"
-@@ -467,6 +468,7 @@
+@@ -467,6 +468,7 @@ StartupProfileInfo CreateInitialProfile(
      profiles::SetLastUsedProfile(profile_basename);
      last_used_profile_set = true;
    }
@@ -17,7 +17,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
  #endif
  
    bool profile_dir_specified =
-@@ -1534,6 +1536,22 @@
+@@ -1543,6 +1545,22 @@ int ChromeBrowserMainParts::PreMainMessageLoopRun() {
  void ChromeBrowserMainParts::PreProfileInit() {
    TRACE_EVENT0("startup", "ChromeBrowserMainParts::PreProfileInit");
  
@@ -40,7 +40,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
    media::AudioManager::SetGlobalAppName(
        l10n_util::GetStringUTF8(IDS_SHORT_PRODUCT_NAME));
  
-@@ -1736,20 +1754,12 @@
+@@ -1740,20 +1758,12 @@ void ChromeBrowserMainParts::PostBrowserStart() {
    browser_process_->browser_policy_connector()->OnBrowserStarted();
  
  #if BUILDFLAG(IS_WIN)
@@ -61,15 +61,15 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
        mz::auth::StartupAuthChecker::ExitBrowserSilently();
      }
    }
-@@ -2286,6 +2296,11 @@
- 
-   for (auto& chrome_extra_part : chrome_extra_parts_) {
+@@ -2291,6 +2301,11 @@ void ChromeBrowserMainParts::PostMainMessageLoopRun() {
      chrome_extra_part->PostMainMessageLoopRun();
    }
-+
+ 
 +#if BUILDFLAG(IS_WIN)
 +  // Shutdown MZ browser context
 +  mz::MzBrowserContext::GetInstance()->Shutdown();
 +#endif
- 
++
    TranslateService::Shutdown();
+ 
+ #if BUILDFLAG(ENABLE_PROCESS_SINGLETON)

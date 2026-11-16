@@ -11,7 +11,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  
  #include "base/auto_reset.h"
  #include "base/byte_size.h"
-@@ -178,7 +181,11 @@
+@@ -180,7 +183,11 @@
  #include "chrome/browser/ui/views/frame/scrim_view.h"
  #include "chrome/browser/ui/views/frame/shadow_overlay_view.h"
  #include "chrome/browser/ui/views/frame/tab_modal_dialog_host.h"
@@ -23,7 +23,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  #include "chrome/browser/ui/views/frame/top_container_view.h"
  #include "chrome/browser/ui/views/frame/top_controls_slide_controller.h"
  #include "chrome/browser/ui/views/frame/vertical_tab_strip_background_blur_backdrop.h"
-@@ -401,9 +408,13 @@
+@@ -404,9 +411,13 @@
  
  #if defined(USE_AURA)
  #include "chrome/browser/ui/views/theme_profile_key.h"
@@ -37,7 +37,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  #endif
  
  #if BUILDFLAG(IS_WIN)
-@@ -887,6 +898,61 @@ class BrowserView::PipExclusionObserverImpl
+@@ -893,6 +904,61 @@ class BrowserView::PipExclusionObserverImpl
  };
  #endif
  
@@ -99,7 +99,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  ///////////////////////////////////////////////////////////////////////////////
  // BrowserView, public:
  
-@@ -1132,6 +1198,9 @@ BrowserView::~BrowserView() {
+@@ -1144,6 +1210,9 @@ BrowserView::~BrowserView() {
    // since it is responsible for showing autofill related bubbles from toolbar's
    // child views and it is an observer for avatar toolbar button if any.
    autofill_bubble_handler_.reset();
@@ -109,7 +109,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  
    // These are raw pointers to child views, so they need to be set to null
    // before `RemoveAllChildViews()` is called to avoid dangling.
-@@ -1948,6 +2017,8 @@ void BrowserView::UpdateLoadingAnimations(bool is_visible) {
+@@ -1964,6 +2033,8 @@ void BrowserView::UpdateLoadingAnimations(bool is_visible) {
      loading_animation_start_ = base::TimeTicks();
      LoadingAnimationCallback(base::TimeTicks::Now());
    }
@@ -118,7 +118,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  }
  
  void BrowserView::SetLoadingAnimationStateChangeClosureForTesting(
-@@ -3379,6 +3450,10 @@ void BrowserView::Paste() {
+@@ -3408,6 +3479,10 @@ void BrowserView::Paste() {
  // won't do anything. We'll need something like an overall clipboard command
  // manager to do that.
  void BrowserView::CutCopyPaste(int command_id) {
@@ -129,7 +129,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  #if BUILDFLAG(IS_MAC)
    auto command = CommandFromBrowserCommand(command_id);
    auto* application_host =
-@@ -4154,7 +4229,57 @@ views::View* BrowserView::CreateMacOverlayView() {
+@@ -4185,7 +4260,57 @@ views::View* BrowserView::CreateMacOverlayView() {
  }
  #endif  // IS_MAC
  
@@ -184,10 +184,10 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
  void BrowserView::OnWidgetDestroying(views::Widget* widget) {
 +  DetachSyncInputCapture();
 +
-   DCHECK(widget_observation_.IsObservingSource(widget));
+   CHECK(widget_observation_.IsObservingSource(widget),
+         base::NotFatalUntil::M162);
    widget_observation_.Reset();
- 
-@@ -5065,6 +5190,100 @@ void BrowserView::AddedToWidget() {
+@@ -5108,6 +5233,100 @@ void BrowserView::AddedToWidget() {
    immersive_mode_controller->Init(this);
    immersive_mode_controller->AddObserver(this);
  
@@ -288,7 +288,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/v
    // WebAppFrameToolbarView depends on ImmersiveModeController so initialize it
    // here.
    if (GetIsWebAppType()) {
-@@ -5179,6 +5398,184 @@ void BrowserView::AddedToWidget() {
+@@ -5220,6 +5439,184 @@ void BrowserView::AddedToWidget() {
    initialized_ = true;
  }
  

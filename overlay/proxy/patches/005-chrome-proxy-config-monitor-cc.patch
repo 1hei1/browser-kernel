@@ -38,20 +38,20 @@ diff --git a/chrome/browser/net/proxy_config_monitor.cc b/chrome/browser/net/pro
  ProxyConfigMonitor::ProxyConfigMonitor(Profile* profile) {
    CHECK_CURRENTLY_ON(content::BrowserThread::UI, base::NotFatalUntil::M161);
    CHECK(profile, base::NotFatalUntil::M161);
-@@ -42,6 +65,12 @@
- #if BUILDFLAG(ENABLE_EXTENSIONS_CORE)
+@@ -43,6 +66,12 @@ ProxyConfigMonitor::ProxyConfigMonitor(Profile* profile) {
    profile_ = profile;
  #endif  // BUILDFLAG(ENABLE_EXTENSIONS_CORE)
-+
+ 
 +  proxy_config_service_ = CreateMzProxyConfigService();
 +  if (proxy_config_service_) {
 +    proxy_config_service_->AddObserver(this);
 +    return;
 +  }
- 
++
  // If this is the ChromeOS sign-in or lock screen profile, just create the
  // tracker from global state.
-@@ -78,6 +107,12 @@
+ #if BUILDFLAG(IS_CHROMEOS)
+@@ -78,6 +107,12 @@ ProxyConfigMonitor::ProxyConfigMonitor(PrefService* local_state) {
              !BrowserThread::IsThreadInitialized(BrowserThread::UI),
          base::NotFatalUntil::M161);
  
@@ -64,7 +64,7 @@ diff --git a/chrome/browser/net/proxy_config_monitor.cc b/chrome/browser/net/pro
    pref_proxy_config_tracker_ =
        ProxyServiceFactory::CreatePrefProxyConfigTrackerOfLocalState(
            local_state);
-@@ -87,12 +122,24 @@
+@@ -87,12 +122,24 @@ ProxyConfigMonitor::ProxyConfigMonitor(PrefService* local_state) {
    proxy_config_service_->AddObserver(this);
  }
  

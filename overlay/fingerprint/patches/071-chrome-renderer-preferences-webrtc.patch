@@ -9,7 +9,7 @@ diff --git a/chrome/browser/renderer_preferences_util.cc b/chrome/browser/render
  
  #include <stdint.h>
  
-@@ -170,6 +171,15 @@
+@@ -172,6 +173,15 @@ void UpdateFromSystemSettings(blink::RendererPreferences* prefs,
    prefs->webrtc_ip_handling_policy = blink::ToWebRTCIPHandlingPolicy(
        pref_service->GetString(prefs::kWebRTCIPHandlingPolicy));
  

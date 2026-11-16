@@ -1,8 +1,7 @@
 diff --git a/services/network/network_context.cc b/services/network/network_context.cc
-index 48d5d5c0eb741..cd39392504a0f 100644
 --- a/services/network/network_context.cc
 +++ b/services/network/network_context.cc
-@@ -1793,7 +1793,9 @@ void NetworkContext::SetAcceptLanguage(const std::string& new_accept_language) {
+@@ -2008,7 +2008,9 @@ void NetworkContext::SetAcceptLanguage(const std::string& new_accept_language) {
    // This may only be called on NetworkContexts created with the constructor
    // that calls MakeURLRequestContext().
    DCHECK(user_agent_settings_);

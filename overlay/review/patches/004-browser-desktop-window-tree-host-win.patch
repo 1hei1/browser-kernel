@@ -11,7 +11,7 @@ diff --git a/chrome/browser/ui/views/frame/browser_desktop_window_tree_host_win.
  #include "chrome/browser/ui/views/frame/browser_window_property_manager_win.h"
  #include "chrome/browser/ui/views/frame/system_menu_insertion_delegate_win.h"
  #include "chrome/browser/ui/views/frame/tab_strip_region_view.h"
-@@ -392,13 +395,33 @@
+@@ -398,13 +401,33 @@ void BrowserDesktopWindowTreeHostWin::HandleCreate() {
        BrowserWindowPropertyManager::CreateBrowserWindowPropertyManager(
            browser_view_, GetHWND());
  

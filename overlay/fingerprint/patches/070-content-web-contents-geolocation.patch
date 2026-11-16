@@ -12,7 +12,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
  
  #include <stddef.h>
  
-@@ -6689,6 +6693,29 @@
+@@ -6695,6 +6699,29 @@ device::mojom::GeolocationContext* WebContentsImpl::GetGeolocationContext() {
      GetDeviceService().BindGeolocationContext(
          geolocation_context_.BindNewPipeAndPassReceiver());
    }

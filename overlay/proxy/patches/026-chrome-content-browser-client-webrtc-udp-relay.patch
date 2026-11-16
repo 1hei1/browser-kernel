@@ -1,7 +1,7 @@
 diff --git a/chrome/browser/chrome_content_browser_client.cc b/chrome/browser/chrome_content_browser_client.cc
 --- a/chrome/browser/chrome_content_browser_client.cc
 +++ b/chrome/browser/chrome_content_browser_client.cc
-@@ -3123,6 +3123,10 @@
+@@ -3125,6 +3125,10 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
      base::CommandLine* command_line,
      int child_process_id) {
    crash_keys::AppendStringAnnotationsCommandLineSwitch(command_line);

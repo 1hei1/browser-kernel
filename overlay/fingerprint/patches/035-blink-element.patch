@@ -1,5 +1,4 @@
 diff --git a/third_party/blink/renderer/core/dom/element.cc b/third_party/blink/renderer/core/dom/element.cc
-index 5ec94dee53c53..5d5aa4e436ba6 100644
 --- a/third_party/blink/renderer/core/dom/element.cc
 +++ b/third_party/blink/renderer/core/dom/element.cc
 @@ -26,6 +26,8 @@
@@ -11,7 +10,7 @@ index 5ec94dee53c53..5d5aa4e436ba6 100644
  #include <algorithm>
  #include <bitset>
  #include <limits>
-@@ -3239,6 +3241,20 @@ DOMRectList* Element::getClientRects() {
+@@ -3479,6 +3481,20 @@ DOMRectList* Element::getClientRects() {
    for (auto& rect : rects) {
      GetDocument().AdjustRectForScrollAndAbsoluteZoom(rect,
                                                       *element_layout_object);
@@ -32,7 +31,7 @@ index 5ec94dee53c53..5d5aa4e436ba6 100644
    }
    return MakeGarbageCollected<DOMRectList>(rects);
  }
-@@ -3286,6 +3302,21 @@ gfx::RectF Element::GetBoundingClientRectNoLifecycleUpdate() const {
+@@ -3563,6 +3579,21 @@ gfx::RectF Element::GetBoundingClientRectNoLifecycleUpdate() const {
    DCHECK(element_layout_object);
    GetDocument().AdjustRectForScrollAndAbsoluteZoom(result,
                                                     *element_layout_object);

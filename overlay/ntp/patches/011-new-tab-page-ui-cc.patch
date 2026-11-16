@@ -1,8 +1,7 @@
 diff --git a/chrome/browser/ui/webui/new_tab_page/new_tab_page_ui.cc b/chrome/browser/ui/webui/new_tab_page/new_tab_page_ui.cc
-index 8208b61bcc71b..86e7890b73970 100644
 --- a/chrome/browser/ui/webui/new_tab_page/new_tab_page_ui.cc
 +++ b/chrome/browser/ui/webui/new_tab_page/new_tab_page_ui.cc
-@@ -141,6 +141,7 @@
+@@ -156,6 +156,7 @@
  #if !defined(OFFICIAL_BUILD)
  #include "chrome/browser/ui/webui/new_tab_page/foo/foo_handler.h"
  #endif
@@ -10,9 +9,9 @@ index 8208b61bcc71b..86e7890b73970 100644
  
  using content::BrowserContext;
  using content::WebContents;
-@@ -1064,6 +1065,13 @@ void NewTabPageUI::BindInterface(
+@@ -1156,6 +1157,13 @@ bool NewTabPageUI::IsManagedProfile(Profile* profile) {
+                  .IsManaged() == signin::Tribool::kTrue;
  }
- #endif
  
 +void NewTabPageUI::BindInterface(
 +    mojo::PendingReceiver<mz_ip::mojom::MzIpHandler>
@@ -22,5 +21,5 @@ index 8208b61bcc71b..86e7890b73970 100644
 +}
 +
  void NewTabPageUI::BindInterface(
-     mojo::PendingReceiver<ntp::tab_groups::mojom::PageHandler>
-         pending_page_handler) {
+     mojo::PendingReceiver<new_tab_page::mojom::PageHandlerFactory>
+         pending_receiver) {

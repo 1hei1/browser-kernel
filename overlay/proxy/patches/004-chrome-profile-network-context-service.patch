@@ -1,9 +1,8 @@
 diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/browser/net/profile_network_context_service.cc
-index a612c6fd9320b..082a11e119b60 100644
 --- a/chrome/browser/net/profile_network_context_service.cc
 +++ b/chrome/browser/net/profile_network_context_service.cc
 @@ -48,6 +48,12 @@
- #include "chrome/browser/ssl/sct_reporting_service_factory.h"
+ #include "chrome/browser/ssl/ssl_config_service_manager.h"
  #include "chrome/browser/webid/federated_identity_permission_context.h"
  #include "chrome/browser/webid/federated_identity_permission_context_factory.h"
 +
@@ -15,7 +14,7 @@ index a612c6fd9320b..082a11e119b60 100644
  #include "chrome/common/buildflags.h"
  #include "chrome/common/chrome_constants.h"
  #include "chrome/common/chrome_content_client.h"
-@@ -460,9 +466,37 @@ bool GetHttpCacheBackendResetParam(PrefService* local_state) {
+@@ -520,9 +526,37 @@ bool GetHttpCacheBackendResetParam(
  }  // namespace
  
  ProfileNetworkContextService::ProfileNetworkContextService(Profile* profile)
@@ -55,7 +54,7 @@ index a612c6fd9320b..082a11e119b60 100644
    PrefService* profile_prefs = profile->GetPrefs();
    quic_allowed_.Init(prefs::kQuicAllowed, profile_prefs,
                       base::BindRepeating(
-@@ -1465,6 +1499,19 @@ void ProfileNetworkContextService::ConfigureNetworkContextParamsInternal(
+@@ -1501,6 +1535,19 @@ void ProfileNetworkContextService::ConfigureNetworkContextParamsInternal(
  
    proxy_config_monitor_->AddToNetworkContextParams(network_context_params);
  

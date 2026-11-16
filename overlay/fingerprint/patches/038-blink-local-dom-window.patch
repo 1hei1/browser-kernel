@@ -1,7 +1,7 @@
 diff --git a/third_party/blink/renderer/core/frame/local_dom_window.cc b/third_party/blink/renderer/core/frame/local_dom_window.cc
 --- a/third_party/blink/renderer/core/frame/local_dom_window.cc
 +++ b/third_party/blink/renderer/core/frame/local_dom_window.cc
-@@ -137,6 +137,10 @@
+@@ -138,6 +138,10 @@
  #include "third_party/blink/renderer/core/scroll/scroll_promise_resolver.h"
  #include "third_party/blink/renderer/core/scroll/scroll_types.h"
  #include "third_party/blink/renderer/core/scroll/scrollbar_theme.h"
@@ -12,7 +12,7 @@ diff --git a/third_party/blink/renderer/core/frame/local_dom_window.cc b/third_p
  #include "third_party/blink/renderer/core/timing/dom_window_performance.h"
  #include "third_party/blink/renderer/core/timing/event_timing.h"
  #include "third_party/blink/renderer/core/timing/soft_navigation_heuristics.h"
-@@ -232,6 +236,52 @@
+@@ -233,6 +237,52 @@ class LocalDOMWindow::NetworkStateObserver final
        online_observer_handle_;
  };
  
@@ -65,7 +65,7 @@ diff --git a/third_party/blink/renderer/core/frame/local_dom_window.cc b/third_p
  LocalDOMWindow::LocalDOMWindow(LocalFrame& frame, WindowAgent* agent)
      : DOMWindow(frame),
        ExecutionContext(agent->isolate(),
-@@ -255,7 +305,10 @@
+@@ -256,7 +306,10 @@ LocalDOMWindow::LocalDOMWindow(LocalFrame& frame, WindowAgent* agent)
        token_(frame.GetLocalFrameToken()),
        network_state_observer_(MakeGarbageCollected<NetworkStateObserver>(this)),
        closewatcher_stack_(
@@ -77,7 +77,7 @@ diff --git a/third_party/blink/renderer/core/frame/local_dom_window.cc b/third_p
  
  void LocalDOMWindow::BindContentSecurityPolicy() {
    DCHECK(!GetContentSecurityPolicy()->IsBound());
-@@ -1940,6 +1993,12 @@
+@@ -1960,6 +2013,12 @@ CSSStyleDeclaration* LocalDOMWindow::getComputedStyle(
  }
  
  double LocalDOMWindow::devicePixelRatio() const {

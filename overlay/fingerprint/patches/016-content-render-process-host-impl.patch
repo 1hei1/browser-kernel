@@ -10,7 +10,7 @@ diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content
  #include <atomic>
  #include <limits>
  #include <list>
-@@ -2067,12 +2069,22 @@
+@@ -2068,12 +2070,22 @@ bool RenderProcessHostImpl::Init() {
    uint64_t trace_id = base::Token::CreateRandom().high();
    TRACE_EVENT("navigation", "RenderProcessHostImpl::Init",
                perfetto::Flow::Global(trace_id));

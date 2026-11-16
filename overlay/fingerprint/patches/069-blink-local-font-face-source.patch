@@ -9,7 +9,7 @@ diff --git a/third_party/blink/renderer/core/css/local_font_face_source.cc b/thi
  #include "third_party/blink/renderer/core/probe/core_probes.h"
  #include "third_party/blink/renderer/platform/fonts/bitmap_glyphs_block_list.h"
  #include "third_party/blink/renderer/platform/fonts/font_cache.h"
-@@ -42,6 +43,10 @@
+@@ -42,6 +43,10 @@ bool LocalFontFaceSource::IsLocalNonBlocking() const {
  
  bool LocalFontFaceSource::IsLocalFontAvailable(
      const FontDescription& font_description) const {
@@ -20,7 +20,7 @@ diff --git a/third_party/blink/renderer/core/css/local_font_face_source.cc b/thi
    // TODO(crbug.com/1025945): Properly handle Windows prior to 10 and Android.
    bool font_available = FontCache::Get().IsPlatformFontUniqueNameMatchAvailable(
        font_description, font_name_);
-@@ -64,6 +69,10 @@
+@@ -64,6 +69,10 @@ const SimpleFontData* LocalFontFaceSource::CreateLoadingFallbackFontData(
  const SimpleFontData* LocalFontFaceSource::CreateFontData(
      const FontDescription& font_description,
      const FontSelectionCapabilities& font_selection_capabilities) {

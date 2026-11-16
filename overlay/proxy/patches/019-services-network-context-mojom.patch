@@ -1,8 +1,7 @@
 diff --git a/services/network/public/mojom/network_context.mojom b/services/network/public/mojom/network_context.mojom
-index 709aae5568b73..ffc866085018c 100644
 --- a/services/network/public/mojom/network_context.mojom
 +++ b/services/network/public/mojom/network_context.mojom
-@@ -198,6 +198,13 @@ struct HttpAuthStaticNetworkContextParams {
+@@ -233,6 +233,13 @@ struct HttpAuthStaticNetworkContextParams {
        DefaultCredentials.ALLOW_DEFAULT_CREDENTIALS;
  };
  
@@ -16,7 +15,7 @@ index 709aae5568b73..ffc866085018c 100644
  struct NetworkContextFilePaths {
    // Points to the shared dictionary directory containing the sqlite database
    // file named "db" for metadata and the disk cache directory named "cache".
-@@ -510,6 +517,10 @@ struct NetworkContextParams {
+@@ -562,6 +569,10 @@ struct NetworkContextParams {
    // HttpAuthPreference.
    HttpAuthStaticNetworkContextParams? http_auth_static_network_context_params;
  

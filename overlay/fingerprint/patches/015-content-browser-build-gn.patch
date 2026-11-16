@@ -1,12 +1,11 @@
 diff --git a/content/browser/BUILD.gn b/content/browser/BUILD.gn
-index e1a23a7d10903..5e079b93ef12d 100644
 --- a/content/browser/BUILD.gn
 +++ b/content/browser/BUILD.gn
-@@ -157,6 +157,7 @@ source_set("browser") {
-     "//components/viz/host",
+@@ -215,6 +215,7 @@ source_set("browser") {
      "//components/web_package",
+     "//components/webauthn/core/browser",
      "//components/webauthn/core/browser:client_data",
 +    "//mz/config",
      "//components/webauthn/core/browser:common_utils",
      "//content:content_resources",
-     "//content/browser/aggregation_service/proto:aggregatable_report_proto",
+     "//content/browser/background_fetch:background_fetch_proto",

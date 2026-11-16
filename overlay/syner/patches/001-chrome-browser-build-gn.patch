@@ -1,12 +1,11 @@
 diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
-index ee832f88e34f6..184808ee9e922 100644
 --- a/chrome/browser/BUILD.gn
 +++ b/chrome/browser/BUILD.gn
-@@ -8568,6 +8568,7 @@ static_library("browser_public_dependencies") {
-       ":titlebar_config",
-       "//build:branding_buildflags",
-       "//chrome/services/util_win/public/mojom",
+@@ -3833,6 +3833,7 @@ source_set("browser") {
+     public_deps += [
+       "//chrome/browser/ui/startup:buildflags",
+       "//chrome/browser/win",
 +      "//mz/eventbus",
-       "//ui/views",
-       "//ui/views/controls/webview",
      ]
+     deps += [
+       ":font_prewarmer_tab_helper",

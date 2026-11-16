@@ -1,7 +1,7 @@
 diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc b/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
 --- a/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
 +++ b/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
-@@ -123,6 +123,7 @@
+@@ -122,6 +122,7 @@
  #include "third_party/blink/renderer/platform/wtf/functional.h"
  #include "third_party/blink/renderer/platform/wtf/math_extras.h"
  #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
@@ -9,7 +9,7 @@ diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_c
  #include "third_party/skia/include/core/SkCanvas.h"
  #include "third_party/skia/include/core/SkColor.h"
  #include "third_party/skia/include/core/SkColorSpace.h"
-@@ -875,6 +876,16 @@
+@@ -937,6 +938,16 @@ ImageData* BaseRenderingContext2D::getImageDataInternal(
      }
    }
  

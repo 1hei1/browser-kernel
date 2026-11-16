@@ -1,0 +1,13 @@
+# MZ 2FA（TOTP）验证码存储：账号密钥只保存在浏览器进程内存里
+
+source_set("totp") {
+  sources = [
+    "totp_store.cc",
+    "totp_store.h",
+  ]
+  deps = [
+    "//base",
+    "//url",
+  ]
+  visibility = [ "*" ]
+}

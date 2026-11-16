@@ -1,7 +1,7 @@
 diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 --- a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 +++ b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
-@@ -164,6 +164,7 @@
+@@ -165,6 +165,7 @@
  #include "third_party/blink/renderer/platform/wtf/functional.h"
  #include "third_party/blink/renderer/platform/wtf/text/format.h"
  #include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
@@ -9,19 +9,18 @@ diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_ba
  #include "third_party/blink/renderer/platform/wtf/text/string_utf8_adaptor.h"
  #include "third_party/skia/include/core/SkColorType.h"
  #include "third_party/skia/include/core/SkImage.h"
-@@ -4119,8 +4120,9 @@
+@@ -4198,8 +4199,9 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return GetIntParameter(script_state, pname);
      case GL_RENDERBUFFER_BINDING:
        return WebGLAny(script_state, renderbuffer_binding_.Get());
 -    case GL_RENDERER:
--      return WebGLAny(script_state, String("WebKit WebGL"));
 +    case GL_RENDERER: {
-+      return WebGLAny(script_state, String("WebKit WebGL"));
+       return WebGLAny(script_state, String("WebKit WebGL"));
 +    }
      case GL_SAMPLE_ALPHA_TO_COVERAGE:
        return GetBooleanParameter(script_state, pname);
      case GL_SAMPLE_BUFFERS:
-@@ -4137,12 +4139,24 @@
+@@ -4216,12 +4218,24 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return GetWebGLIntArrayParameter(script_state, pname);
      case GL_SCISSOR_TEST:
        return GetBooleanParameter(script_state, pname);
@@ -47,17 +46,16 @@ diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_ba
      case GL_STENCIL_BACK_FAIL:
        return GetUnsignedIntParameter(script_state, pname);
      case GL_STENCIL_BACK_FUNC:
-@@ -4197,13 +4211,25 @@
+@@ -4276,13 +4290,25 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return WebGLAny(script_state, unpack_premultiply_alpha_);
      case GC3D_UNPACK_COLORSPACE_CONVERSION_WEBGL:
        return WebGLAny(script_state, unpack_colorspace_conversion_);
 -    case GL_VENDOR:
--      return WebGLAny(script_state, String("WebKit"));
--    case GL_VERSION:
 +    case GL_VENDOR: {
 +      // 遮蔽后的 VENDOR/RENDERER 在 Chrome 里恒为 "WebKit" / "WebKit WebGL"；
 +      // 真实显卡信息只通过 WEBGL_debug_renderer_info（UNMASKED_*）暴露，配置值只作用在那里。
-+      return WebGLAny(script_state, String("WebKit"));
+       return WebGLAny(script_state, String("WebKit"));
+-    case GL_VERSION:
 +    }
 +    case GL_VERSION: {
 +      // MZ: 同上，固定为真实 Chrome 的值。
@@ -76,9 +74,7 @@ diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_ba
      case GL_VIEWPORT:
        return GetWebGLIntArrayParameter(script_state, pname);
      case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES:  // OES_standard_derivatives
-@@ -4214,24 +4240,42 @@
-           GL_INVALID_ENUM, "getParameter",
-           "invalid parameter name, OES_standard_derivatives not enabled");
+@@ -4295,6 +4321,16 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return ScriptValue::CreateNull(script_state->GetIsolate());
      case WebGLDebugRendererInfo::kUnmaskedRendererWebgl:
        if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
@@ -95,9 +91,7 @@ diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_ba
          return WebGLAny(script_state,
                          String(ContextGL()->GetString(GL_RENDERER)));
        }
-       SynthesizeGLError(
-           GL_INVALID_ENUM, "getParameter",
-           "invalid parameter name, WEBGL_debug_renderer_info not enabled");
+@@ -4304,6 +4340,14 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return ScriptValue::CreateNull(script_state->GetIsolate());
      case WebGLDebugRendererInfo::kUnmaskedVendorWebgl:
        if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
@@ -112,14 +106,7 @@ diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_ba
          return WebGLAny(script_state,
                          String(ContextGL()->GetString(GL_VENDOR)));
        }
-       SynthesizeGLError(
-           GL_INVALID_ENUM, "getParameter",
-           "invalid parameter name, WEBGL_debug_renderer_info not enabled");
-       return ScriptValue::CreateNull(script_state->GetIsolate());
-     case GL_VERTEX_ARRAY_BINDING_OES:  // OES_vertex_array_object
-       if (ExtensionEnabled(kOESVertexArrayObjectName) || IsWebGL2()) {
-         if (!bound_vertex_array_object_->IsDefaultObject())
-@@ -5371,6 +5415,14 @@
+@@ -5452,6 +5496,14 @@ void WebGLRenderingContextBase::ReadPixelsHelper(GLint x,
        return;
      }
      ContextGL()->ReadPixels(x, y, width, height, format, type, data);

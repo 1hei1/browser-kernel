@@ -1,8 +1,7 @@
 diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_browser_main.cc
-index d347c428acc41..9011d873638c3 100644
 --- a/chrome/browser/chrome_browser_main.cc
 +++ b/chrome/browser/chrome_browser_main.cc
-@@ -137,6 +137,10 @@
+@@ -146,6 +146,10 @@
  #include "ui/color/color_provider_manager.h"
  #include "ui/gl/gl_switches.h"
  
@@ -13,7 +12,7 @@ index d347c428acc41..9011d873638c3 100644
  // Per-platform #include blocks, in alphabetical order.
  
  #if BUILDFLAG(IS_ANDROID)
-@@ -1566,6 +1570,19 @@ void ChromeBrowserMainParts::PostBrowserStart() {
+@@ -1734,6 +1738,19 @@ void ChromeBrowserMainParts::PostBrowserStart() {
  
    browser_process_->browser_policy_connector()->OnBrowserStarted();
  
@@ -33,7 +32,7 @@ index d347c428acc41..9011d873638c3 100644
  #if BUILDFLAG(ENABLE_PROCESS_SINGLETON)
    // Allow ProcessSingleton to process messages.
    // This is done here instead of just relying on the main message loop's start
-@@ -2033,10 +2050,15 @@ void ChromeBrowserMainParts::PostMainMessageLoopRun() {
+@@ -2231,10 +2248,15 @@ void ChromeBrowserMainParts::PostMainMessageLoopRun() {
    TRACE_EVENT_END("toplevel", perfetto::Track::FromPointer(this));
    TRACE_EVENT0("startup", "ChromeBrowserMainParts::PostMainMessageLoopRun");
  #if BUILDFLAG(IS_ANDROID)

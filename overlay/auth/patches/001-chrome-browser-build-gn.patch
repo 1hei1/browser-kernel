@@ -1,12 +1,11 @@
 diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
-index 184808ee9e922..142282158b2c1 100644
 --- a/chrome/browser/BUILD.gn
 +++ b/chrome/browser/BUILD.gn
-@@ -8568,6 +8568,7 @@ static_library("browser_public_dependencies") {
-       ":titlebar_config",
-       "//build:branding_buildflags",
-       "//chrome/services/util_win/public/mojom",
+@@ -3832,6 +3832,7 @@ source_set("browser") {
+     libs += [ "crypt32.lib" ]
+     public_deps += [
+       "//chrome/browser/ui/startup:buildflags",
 +      "//mz/auth",
+       "//chrome/browser/win",
        "//mz/eventbus",
-       "//ui/views",
-       "//ui/views/controls/webview",
+     ]

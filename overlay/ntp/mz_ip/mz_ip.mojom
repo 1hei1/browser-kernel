@@ -17,8 +17,20 @@ struct IpInfo {
   string error;        // Error message if detection failed
 };
 
+// MZ 2FA：一个账号当前的 TOTP 验证码。
+struct TotpCode {
+  string site;       // 域名（如 github.com）
+  string username;   // 账号
+  string code;       // 当前验证码
+  int32 remaining;   // 当前验证码剩余秒数
+  int32 period;      // 刷新周期（秒）
+};
+
 // Browser-side handler for IP detection requests from JS.
 interface MzIpHandler {
   // Fetches the current public IP address and location info.
   GetIpInfo() => (IpInfo info);
+
+  // MZ 2FA：返回当前环境所有带 2FA 密钥账号的验证码（密钥本身不会传到页面）。
+  GetTotpCodes() => (array<TotpCode> codes);
 };

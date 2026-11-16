@@ -1,7 +1,7 @@
 diff --git a/chrome/browser/chrome_browser_interface_binders_webui_parts_desktop.cc b/chrome/browser/chrome_browser_interface_binders_webui_parts_desktop.cc
 --- a/chrome/browser/chrome_browser_interface_binders_webui_parts_desktop.cc
 +++ b/chrome/browser/chrome_browser_interface_binders_webui_parts_desktop.cc
-@@ -183,6 +183,7 @@
+@@ -185,6 +185,7 @@
  #if !defined(OFFICIAL_BUILD)
  #include "chrome/browser/ui/webui/new_tab_page/foo/foo.mojom.h"  // nogncheck crbug.com/40147906
  #endif  // defined(OFFICIAL_BUILD)
@@ -9,7 +9,7 @@ diff --git a/chrome/browser/chrome_browser_interface_binders_webui_parts_desktop
  
  #if BUILDFLAG(ENABLE_DICE_SUPPORT)
  #include "chrome/browser/ui/webui/feature_showcase/feature_showcase_ui.h"
-@@ -391,6 +392,10 @@
+@@ -393,6 +394,10 @@ void PopulateChromeWebUIFrameBindersPartsDesktop(
    RegisterWebUIControllerInterfaceBinder<foo::mojom::FooHandler, NewTabPageUI>(
        map);
  #endif  // !defined(OFFICIAL_BUILD)

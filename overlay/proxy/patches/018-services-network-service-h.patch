@@ -1,7 +1,7 @@
 diff --git a/services/network/network_service.h b/services/network/network_service.h
 --- a/services/network/network_service.h
 +++ b/services/network/network_service.h
-@@ -186,6 +186,10 @@
+@@ -190,6 +190,10 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkService
        mojom::HttpAuthStaticParamsPtr http_auth_static_params) override;
    void ConfigureHttpAuthPrefs(
        mojom::HttpAuthDynamicParamsPtr http_auth_dynamic_params) override;

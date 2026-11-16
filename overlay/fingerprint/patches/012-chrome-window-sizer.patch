@@ -1,8 +1,7 @@
 diff --git a/chrome/browser/ui/window_sizer/window_sizer.cc b/chrome/browser/ui/window_sizer/window_sizer.cc
-index 80a7479fa3912..a1392272c3c10 100644
 --- a/chrome/browser/ui/window_sizer/window_sizer.cc
 +++ b/chrome/browser/ui/window_sizer/window_sizer.cc
-@@ -26,6 +26,7 @@
+@@ -25,6 +25,7 @@
  #include "ui/base/ui_base_switches.h"
  #include "ui/display/display.h"
  #include "ui/display/screen.h"
@@ -10,7 +9,7 @@ index 80a7479fa3912..a1392272c3c10 100644
  
  #if BUILDFLAG(IS_CHROMEOS)
  #include "chrome/browser/ui/window_sizer/window_sizer_chromeos.h"
-@@ -254,6 +255,56 @@ void WindowSizer::DetermineWindowBoundsAndShowState(
+@@ -252,6 +253,56 @@ void WindowSizer::DetermineWindowBoundsAndShowState(
      const gfx::Rect& specified_bounds,
      gfx::Rect* bounds,
      ui::mojom::WindowShowState* show_state) {

@@ -47,7 +47,7 @@ diff --git a/build/win/reorder-imports.py b/build/win/reorder-imports.py
 diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
 --- a/chrome/BUILD.gn
 +++ b/chrome/BUILD.gn
-@@ -99,6 +99,8 @@
+@@ -99,6 +99,8 @@ if (is_win) {
        rebase_path("$root_out_dir/initialexe", root_build_dir),
        "-o",
        rebase_path("$root_out_dir", root_build_dir),

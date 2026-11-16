@@ -9,15 +9,15 @@ diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/brow
  
  #if BUILDFLAG(IS_CHROMEOS)
  #include "ash/constants/ash_features.h"
-@@ -211,6 +212,7 @@
-       net::HttpUtil::ExpandLanguageList(language_pref);
+@@ -212,6 +213,7 @@ std::string ComputeAcceptLanguageFromPref(const std::string& language_pref) {
    return net::HttpUtil::GenerateAcceptLanguageHeader(accept_languages_str);
  }
-+
  
++
  // Tests allowing ambient authentication with default credentials based on the
  // profile type.
-@@ -696,11 +698,18 @@
+ bool IsAmbientAuthAllowedForProfile(Profile* profile) {
+@@ -694,11 +696,18 @@ void ProfileNetworkContextService::DisableQuicIfNotAllowed() {
  
  void ProfileNetworkContextService::UpdateAcceptLanguage() {
    const std::string accept_language = ComputeAcceptLanguage();
@@ -36,7 +36,7 @@ diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/brow
  }
  
  void ProfileNetworkContextService::OnThirdPartyCookieBlockingChanged(
-@@ -713,6 +722,20 @@
+@@ -711,6 +720,20 @@ void ProfileNetworkContextService::OnThirdPartyCookieBlockingChanged(
  }
  
  std::string ProfileNetworkContextService::ComputeAcceptLanguage() const {

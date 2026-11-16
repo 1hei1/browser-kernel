@@ -2,8 +2,8 @@ schema_version = 1
 
 [port]
 name = "mz-chromium"
-chromium_version = "157.0.8103.51"
-chromium_milestone = 157
+chromium_version = "158.0.8127.37"
+chromium_milestone = 158
 core_api = 1
 
 # One branch represents one Chromium port. Do not add milestone directories
@@ -62,3 +62,9 @@ id = "launch-cookies"
 overlay = "cookie"
 state = "legacy-patch"
 requires = ["eventbus-input-sync", "account-import"]
+
+[[capabilities]]
+id = "account-totp"
+overlay = "totp"
+state = "legacy-patch"
+requires = ["eventbus-input-sync", "account-import", "new-tab-page"]

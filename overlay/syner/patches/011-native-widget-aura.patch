@@ -1,5 +1,4 @@
 diff --git a/ui/views/widget/native_widget_aura.cc b/ui/views/widget/native_widget_aura.cc
-index 9b7f41442f233..d9de50e84489e 100644
 --- a/ui/views/widget/native_widget_aura.cc
 +++ b/ui/views/widget/native_widget_aura.cc
 @@ -11,6 +11,7 @@
@@ -10,7 +9,7 @@ index 9b7f41442f233..d9de50e84489e 100644
  #include "base/functional/callback_helpers.h"
  #include "base/location.h"
  #include "base/memory/raw_ptr.h"
-@@ -299,8 +300,17 @@ void NativeWidgetAura::InitNativeWidget(Widget::InitParams params) {
+@@ -302,8 +303,17 @@ void NativeWidgetAura::InitNativeWidget(Widget::InitParams params) {
  
      // Set up the transient child before the window is added. This way the
      // LayoutManager knows the window has a transient parent.

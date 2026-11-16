@@ -19,6 +19,7 @@ source_set("mz_ip") {
     ":mojo_bindings",
     "//base",
     "//chrome/browser/profiles:profile",
+    "//mz/totp",
     "//mojo/public/cpp/bindings",
     "//net",
     "//services/network/public/cpp",

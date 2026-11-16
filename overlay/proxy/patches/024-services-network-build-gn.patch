@@ -1,5 +1,4 @@
 diff --git a/services/network/BUILD.gn b/services/network/BUILD.gn
-index cdee37560e..5325472dd3 100644
 --- a/services/network/BUILD.gn
 +++ b/services/network/BUILD.gn
 @@ -283,6 +283,8 @@ component("network_service") {

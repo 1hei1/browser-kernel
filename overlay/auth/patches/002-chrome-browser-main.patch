@@ -1,8 +1,7 @@
 diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_browser_main.cc
-index 9011d873638c3..399b29ed42e2c 100644
 --- a/chrome/browser/chrome_browser_main.cc
 +++ b/chrome/browser/chrome_browser_main.cc
-@@ -139,6 +139,7 @@
+@@ -148,6 +148,7 @@
  
  #if BUILDFLAG(IS_WIN)
  #include "mz/eventbus/eventbus.h"
@@ -10,7 +9,7 @@ index 9011d873638c3..399b29ed42e2c 100644
  #endif
  
  // Per-platform #include blocks, in alphabetical order.
-@@ -1571,14 +1572,21 @@ void ChromeBrowserMainParts::PostBrowserStart() {
+@@ -1739,14 +1740,21 @@ void ChromeBrowserMainParts::PostBrowserStart() {
    browser_process_->browser_policy_connector()->OnBrowserStarted();
  
  #if BUILDFLAG(IS_WIN)

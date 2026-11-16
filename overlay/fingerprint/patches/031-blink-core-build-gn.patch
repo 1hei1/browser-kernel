@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/core/BUILD.gn b/third_party/blink/renderer/core/BUILD.gn
 --- a/third_party/blink/renderer/core/BUILD.gn
 +++ b/third_party/blink/renderer/core/BUILD.gn
-@@ -407,6 +407,7 @@
-     ":generate_eventhandler_names",
+@@ -410,6 +410,7 @@ component("core") {
+     ":ift_custom_font_data",
      ":make_deprecation_info",
      ":xml_ffi",
 +    "//mz/fingerprint",

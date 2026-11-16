@@ -9,15 +9,15 @@ diff --git a/services/network/network_context.cc b/services/network/network_cont
  #include "net/base/isolation_info.h"
  #include "net/base/load_flags.h"
  #include "net/base/net_errors.h"
-@@ -103,6 +104,7 @@
- #include "net/http/http_request_headers.h"
+@@ -105,6 +106,7 @@
  #include "net/http/http_server_properties.h"
  #include "net/http/http_transaction_factory.h"
+ #include "net/http/transport_security_state.h"
 +#include "net/socket/socks5_auth_cache.h"
  #include "net/log/net_log_source_type.h"
  #include "net/net_buildflags.h"
  #include "net/proxy_resolution/configured_proxy_resolution_service.h"
-@@ -855,6 +857,16 @@
+@@ -858,6 +860,16 @@ NetworkContext::NetworkContext(
              ->allow_default_credentials);
    }
  

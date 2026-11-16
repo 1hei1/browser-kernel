@@ -1,31 +1,25 @@
 diff --git a/chrome/browser/ui/startup/infobar_utils.cc b/chrome/browser/ui/startup/infobar_utils.cc
 --- a/chrome/browser/ui/startup/infobar_utils.cc
 +++ b/chrome/browser/ui/startup/infobar_utils.cc
-@@ -253,19 +253,21 @@ void AddInfoBarsIfNecessary(
+@@ -253,6 +253,7 @@ void AddInfoBarsIfNecessary(BrowserWindowInterface* browser,
    infobars::ContentInfoBarManager* infobar_manager =
        infobars::ContentInfoBarManager::FromWebContents(web_contents);
-
+ 
 +#if 0  // MZ: Disable Google API keys missing infobar
    if (!google_apis::HasAPIKeyConfigured()) {
      if (infobars::IsInfoBarMigrated(
              infobars::InfoBarDelegate::GOOGLE_API_KEYS_INFOBAR_DELEGATE)) {
-       if (auto* manager =
-               infobars::BrowserInfoBarManager::From(g_browser_process)) {
-         manager->Show(
-             tabs::TabInterface::GetFromContents(web_contents),
-             infobars::InfoBarDelegate::GOOGLE_API_KEYS_INFOBAR_DELEGATE);
-       }
-     } else {
+@@ -266,6 +267,7 @@ void AddInfoBarsIfNecessary(BrowserWindowInterface* browser,
        GoogleApiKeysInfoBarDelegate::Create(infobar_manager);
      }
    }
 +#endif
-
+ 
    if (ObsoleteSystem::IsObsoleteNowOrSoon()) {
      PrefService* local_state = g_browser_process->local_state();
-@@ -311,14 +313,17 @@ void AddInfoBarsIfNecessary(
+@@ -311,14 +313,17 @@ void AddInfoBarsIfNecessary(BrowserWindowInterface* browser,
    }
-
+ 
  #if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +#if 0  // MZ: Disable Session Restore infobar
    if (base::FeatureList::IsEnabled(features::kSessionRestoreInfobar)) {
@@ -36,12 +30,12 @@ diff --git a/chrome/browser/ui/startup/infobar_utils.cc b/chrome/browser/ui/star
    }
 +#endif
  #endif  // BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
-
+ 
 +#if 0  // MZ: Disable default browser prompt infobar
    // The default browser prompt should only be shown after the first run.
    if (is_first_run == chrome::startup::IsFirstRun::kNo) {
  #if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
-@@ -361,5 +366,6 @@ void AddInfoBarsIfNecessary(
+@@ -361,5 +366,6 @@ void AddInfoBarsIfNecessary(BrowserWindowInterface* browser,
      ShowDefaultBrowserPrompt(profile, base::DoNothing());
  #endif  // BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
    }

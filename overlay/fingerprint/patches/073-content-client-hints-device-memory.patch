@@ -9,7 +9,7 @@ diff --git a/content/browser/client_hints/client_hints.cc b/content/browser/clie
  
  #include <algorithm>
  #include <optional>
-@@ -241,8 +242,12 @@
+@@ -241,8 +242,12 @@ void AddDeviceMemoryHeader(net::HttpRequestHeaders* headers,
                             bool use_deprecated_version = false) {
    CHECK(headers, base::NotFatalUntil::M160);
    blink::ApproximatedDeviceMemory::Initialize();

@@ -1,7 +1,7 @@
 diff --git a/third_party/blink/renderer/core/loader/frame_loader.cc b/third_party/blink/renderer/core/loader/frame_loader.cc
 --- a/third_party/blink/renderer/core/loader/frame_loader.cc
 +++ b/third_party/blink/renderer/core/loader/frame_loader.cc
-@@ -140,6 +140,7 @@
+@@ -141,6 +141,7 @@
  #include "third_party/blink/renderer/platform/runtime_feature_state/runtime_feature_state_override_context.h"
  #include "third_party/blink/renderer/platform/scheduler/public/frame_scheduler.h"
  #include "third_party/blink/renderer/platform/weborigin/security_origin.h"
@@ -9,7 +9,7 @@ diff --git a/third_party/blink/renderer/core/loader/frame_loader.cc b/third_part
  #include "third_party/blink/renderer/platform/weborigin/security_policy.h"
  #include "third_party/blink/renderer/platform/wtf/text/string_utf8_adaptor.h"
  #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
-@@ -1606,6 +1607,12 @@
+@@ -1607,6 +1608,12 @@ String FrameLoader::ApplyUserAgentOverride(const String& user_agent) const {
  }
  
  String FrameLoader::UserAgent() const {

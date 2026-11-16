@@ -1,7 +1,7 @@
 diff --git a/chrome/browser/ui/webui/new_tab_page/BUILD.gn b/chrome/browser/ui/webui/new_tab_page/BUILD.gn
 --- a/chrome/browser/ui/webui/new_tab_page/BUILD.gn
 +++ b/chrome/browser/ui/webui/new_tab_page/BUILD.gn
-@@ -67,6 +67,8 @@
+@@ -72,6 +72,8 @@ source_set("impl") {
    sources = [
      "new_tab_page_handler.cc",
      "new_tab_page_ui.cc",

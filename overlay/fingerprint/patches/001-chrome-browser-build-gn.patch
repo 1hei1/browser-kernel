@@ -1,20 +1,20 @@
 diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
 --- a/chrome/browser/BUILD.gn
 +++ b/chrome/browser/BUILD.gn
-@@ -2624,6 +2624,8 @@
-       "//chrome/browser/ui/content_settings:impl",
-       "//chrome/browser/ui/desktop_to_mobile_promos:impl",
+@@ -3102,6 +3102,8 @@ source_set("browser") {
+       "//chrome/browser/ui/fullscreen",
+       "//chrome/browser/ui/fullscreen:impl",
        "//chrome/browser/ui/global_media_controls",
 +    "//mz/config",
 +    "//mz/fingerprint",
        "//chrome/browser/ui/global_media_controls:impl",
-       "//chrome/browser/ui/media_router",
-       "//chrome/browser/ui/media_router:impl",
-@@ -3524,6 +3526,7 @@
-       "//chrome/services/util_win/public/mojom",
+       "//chrome/browser/ui/infobars",
+       "//chrome/browser/ui/lens",
+@@ -3835,6 +3837,7 @@ source_set("browser") {
        "//mz/auth",
+       "//chrome/browser/win",
        "//mz/eventbus",
 +      "//mz/fingerprint",
-       "//ui/views",
-       "//ui/views/controls/webview",
      ]
+     deps += [
+       ":font_prewarmer_tab_helper",

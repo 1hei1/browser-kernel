@@ -9,7 +9,7 @@ diff --git a/chrome/browser/ui/webui/chrome_web_ui_configs.cc b/chrome/browser/u
  #include "chrome/browser/ui/webui/saved_tab_groups_unsupported/saved_tab_groups_unsupported_ui.h"
  #include "chrome/browser/ui/webui/segmentation_internals/segmentation_internals_ui.h"
  #include "chrome/browser/ui/webui/signin_internals_ui.h"
-@@ -289,6 +290,7 @@
+@@ -296,6 +297,7 @@ void RegisterChromeWebUIConfigs() {
    map.AddWebUIConfig(std::make_unique<FamilyLinkUserInternalsUIConfig>());
    map.AddWebUIConfig(std::make_unique<FlagsUIConfig>());
    map.AddWebUIConfig(std::make_unique<glic::GlicExperimentalOptInUIConfig>());

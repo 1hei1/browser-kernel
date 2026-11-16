@@ -1,5 +1,4 @@
 diff --git a/third_party/blink/renderer/modules/webaudio/audio_buffer.cc b/third_party/blink/renderer/modules/webaudio/audio_buffer.cc
-index 40a355dec4aad..ee8613b53ecfd 100644
 --- a/third_party/blink/renderer/modules/webaudio/audio_buffer.cc
 +++ b/third_party/blink/renderer/modules/webaudio/audio_buffer.cc
 @@ -28,6 +28,8 @@
@@ -10,7 +9,7 @@ index 40a355dec4aad..ee8613b53ecfd 100644
 +
  #include <memory>
  
- #include "base/compiler_specific.h"
+ #include "base/check_op.h"
 @@ -220,7 +222,17 @@ NotShared<DOMFloat32Array> AudioBuffer::getChannelData(unsigned channel_index) {
      return NotShared<DOMFloat32Array>(nullptr);
    }

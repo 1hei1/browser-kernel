@@ -1,7 +1,7 @@
 diff --git a/chrome/browser/ui/webui/new_tab_page/BUILD.gn b/chrome/browser/ui/webui/new_tab_page/BUILD.gn
 --- a/chrome/browser/ui/webui/new_tab_page/BUILD.gn
 +++ b/chrome/browser/ui/webui/new_tab_page/BUILD.gn
-@@ -15,6 +15,7 @@
+@@ -15,6 +15,7 @@ mojom("mojo_bindings") {
  
    public_deps = [
      "//chrome/browser/ui/webui/new_tab_page/action_chips:mojo_bindings",

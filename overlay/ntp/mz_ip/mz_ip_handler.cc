@@ -10,6 +10,7 @@
 
 #include "base/containers/span.h"
 #include "base/json/json_reader.h"
+#include "base/time/time.h"
 #include "base/values.h"
 #include "chrome/browser/profiles/profile.h"
 #include "net/base/load_flags.h"
@@ -19,6 +20,7 @@
 #include "services/network/public/cpp/simple_url_loader.h"
 #include "services/network/public/mojom/url_response_head.mojom.h"
 #include "url/gurl.h"
+#include "mz/totp/totp_store.h"
 
 namespace {
 
@@ -255,4 +257,18 @@ void MzIpHandler::OnIpFetchComplete(
   info->timezone = timezone ? *timezone : "";
 
   std::move(pending_callback_).Run(std::move(info));
+}
+
+void MzIpHandler::GetTotpCodes(GetTotpCodesCallback callback) {
+  std::vector<mz_ip::mojom::TotpCodePtr> result;
+  for (const mz::totp::Code& code : mz::totp::GetCodes(base::Time::Now())) {
+    auto item = mz_ip::mojom::TotpCode::New();
+    item->site = code.site;
+    item->username = code.username;
+    item->code = code.code;
+    item->remaining = code.remaining;
+    item->period = code.period;
+    result.push_back(std::move(item));
+  }
+  std::move(callback).Run(std::move(result));
 }

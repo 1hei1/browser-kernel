@@ -1,10 +1,10 @@
 diff --git a/chrome/common/chrome_switches.h b/chrome/common/chrome_switches.h
 --- a/chrome/common/chrome_switches.h
 +++ b/chrome/common/chrome_switches.h
-@@ -284,6 +284,12 @@
+@@ -284,6 +284,12 @@ inline constexpr char kDisableUpdaterScheduler[] = "disable-updater-scheduler";
  // UserDatadir.
  inline constexpr char kDiskCacheDir[] = "disk-cache-dir";
-
+ 
 +// Specifies the MZ environment ID (UUID).
 +inline constexpr char kMzEnvId[] = "mz-env-id";
 +
@@ -13,4 +13,4 @@ diff --git a/chrome/common/chrome_switches.h b/chrome/common/chrome_switches.h
 +
  // Forces the maximum disk space to be used by the disk cache, in bytes.
  inline constexpr char kDiskCacheSize[] = "disk-cache-size";
-
+ 
