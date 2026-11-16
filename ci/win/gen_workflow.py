@@ -20,6 +20,11 @@ on:
     branches: ['ci/**']
     paths: ['.github/workflows/mz-win-build.yml', '.github/actions/mz-win-setup/**', 'ci/win/**']
   workflow_dispatch:
+    inputs:
+      resume_run_id:
+        description: 'Resume from the mz-tree artifact of this earlier run (empty = full sync)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -91,9 +96,28 @@ def job_head(i: int) -> str:
 def main() -> None:
     y = HEAD
     y += job_head(1) + '''      - name: Fetch Chromium ${{ env.CHROMIUM_TAG }} (gclient, no history)
+        if: inputs.resume_run_id == ''
         run: python ci/win/stage.py sync
       - name: Apply MZ overlays and gn gen
+        if: inputs.resume_run_id == ''
         run: python ci/win/stage.py prepare
+      - name: Download work tree of run ${{ inputs.resume_run_id }}
+        if: inputs.resume_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: mz-tree
+          path: ${{ env.MZ_WORK }}
+          run-id: ${{ inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+      - name: Restore work tree
+        if: inputs.resume_run_id != ''
+        run: |
+          Set-Location $env:MZ_WORK
+          7z x -y -mmt=on tree.7z | Select-Object -Last 3
+          $rc = $LASTEXITCODE
+          if ($rc -gt 1) { throw "7z failed with exit code $rc" }
+          Remove-Item tree.7z
+          $global:LASTEXITCODE = 0
 '''
     y += f'''      - name: Build (ninja, time-boxed)
         id: build
