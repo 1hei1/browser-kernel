@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <limits>
 #include <sstream>
 #include <unordered_set>
 
@@ -634,6 +635,76 @@ uint64_t BrowserFingerprint::GetAudioSeed() {
     SetCurrentProfileId(seed.empty() ? "default" : seed);
   }
   return audio_seed_;
+}
+
+// static
+bool BrowserFingerprint::GetBatteryOverride(bool* charging,
+                                            double* level,
+                                            double* charging_time_seconds,
+                                            double* discharging_time_seconds) {
+  const std::string seed = mz::config::GetProfileSeed();
+  if (seed.empty()) {
+    return false;
+  }
+  // FNV-1a：每个渲染进程算出来都一样，不依赖进程内随机数
+  uint64_t hash = 1469598103934665603ULL;
+  for (unsigned char c : std::string("mz-battery:") + seed) {
+    hash ^= c;
+    hash *= 1099511628211ULL;
+  }
+  auto next = [&hash]() -> uint32_t {
+    hash = hash * 6364136223846793005ULL + 1442695040888963407ULL;
+    return static_cast<uint32_t>(hash >> 33);
+  };
+
+  const double kInfinity = std::numeric_limits<double>::infinity();
+  const std::string renderer = mz::config::GetWebGLRenderer();
+  auto has = [&renderer](const char* needle) {
+    return renderer.find(needle) != std::string::npos;
+  };
+  const bool mobile_gpu = has("Laptop") || has("Mobile") || has("Max-Q") ||
+                          has("MX1") || has("MX2") || has("MX3") || has("MX4") ||
+                          has("MX5");
+  const bool integrated_gpu = has("Iris") || has("UHD Graphics") ||
+                              has("HD Graphics") || has("Arc(TM) Graphics") ||
+                              has("Arc(TM) 1") || has("Radeon(TM) Graphics") ||
+                              has("Radeon Graphics") || has("Radeon(TM) 7") ||
+                              has("Radeon(TM) 8") || has("Radeon 7") || has("Radeon 8");
+  bool laptop = mobile_gpu;
+  if (!laptop && integrated_gpu) {
+    laptop = next() % 100 < 70;  // 核显机器大多是笔记本
+  }
+  if (renderer.empty()) {
+    laptop = next() % 100 < 50;
+  }
+
+  if (!laptop) {
+    // 台式机没有电池时 Chrome 报的默认值
+    *charging = true;
+    *level = 1.0;
+    *charging_time_seconds = 0;
+    *discharging_time_seconds = kInfinity;
+    return true;
+  }
+
+  const bool on_ac = next() % 100 < 60;
+  // 插着电的笔记本常年满电或接近满电，拔了电的落在 35%~95%
+  int percent = on_ac ? (next() % 100 < 45 ? 100 : 80 + static_cast<int>(next() % 20))
+                      : 35 + static_cast<int>(next() % 61);
+  *level = percent / 100.0;
+  *charging = on_ac;
+  if (on_ac) {
+    // Windows 拿不到充电剩余时间，Chrome 报无穷大；充满时为 0
+    *charging_time_seconds = percent == 100 ? 0 : kInfinity;
+    *discharging_time_seconds = kInfinity;
+  } else {
+    *charging_time_seconds = kInfinity;
+    // 放电剩余时间：按 4~8 小时的满电续航折算，取整到分钟
+    const double full_hours = 4.0 + (next() % 400) / 100.0;
+    *discharging_time_seconds =
+        static_cast<double>(static_cast<int64_t>(full_hours * 3600 * *level / 60) * 60);
+  }
+  return true;
 }
 
 }  // namespace fingerprint

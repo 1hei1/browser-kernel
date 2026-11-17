@@ -126,6 +126,15 @@ class BrowserFingerprint {
   // 获取当前 Profile 的 Audio seed
   static uint64_t GetAudioSeed();
 
+  // MZ: 电池状态。每个环境固定一组自洽的值（按环境种子生成），真实电池不再透出。
+  // 伪装的显卡是台式机独显时按“没有电池”的台式机返回（充电中、100%、
+  // chargingTime 0、dischargingTime 无穷大），笔记本 / 核显按笔记本随机。
+  // 返回 false 表示没有环境配置，使用真实值。时间为秒，无穷大用 infinity。
+  static bool GetBatteryOverride(bool* charging,
+                                 double* level,
+                                 double* charging_time_seconds,
+                                 double* discharging_time_seconds);
+
   // 设置当前 Profile ID(在 Profile 创建/切换时调用)
   static void SetCurrentProfileId(const std::string& profile_id);
 

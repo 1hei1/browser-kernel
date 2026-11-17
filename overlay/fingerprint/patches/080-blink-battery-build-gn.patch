@@ -1,0 +1,13 @@
+diff --git a/third_party/blink/renderer/modules/battery/BUILD.gn b/third_party/blink/renderer/modules/battery/BUILD.gn
+--- a/third_party/blink/renderer/modules/battery/BUILD.gn
++++ b/third_party/blink/renderer/modules/battery/BUILD.gn
+@@ -13,5 +13,8 @@ blink_modules_sources("battery") {
+     "battery_status.h",
+   ]
+ 
+-  deps = [ "//services/service_manager/public/cpp" ]
++  deps = [
++    "//mz/fingerprint",
++    "//services/service_manager/public/cpp",
++  ]
+ }

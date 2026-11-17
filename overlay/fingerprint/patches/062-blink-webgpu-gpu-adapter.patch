@@ -1,5 +1,4 @@
 diff --git a/third_party/blink/renderer/modules/webgpu/gpu_adapter.cc b/third_party/blink/renderer/modules/webgpu/gpu_adapter.cc
-index 67cc57071404f..8826a15816097 100644
 --- a/third_party/blink/renderer/modules/webgpu/gpu_adapter.cc
 +++ b/third_party/blink/renderer/modules/webgpu/gpu_adapter.cc
 @@ -4,6 +4,8 @@
@@ -11,9 +10,9 @@ index 67cc57071404f..8826a15816097 100644
  #include "services/metrics/public/cpp/ukm_builders.h"
  #include "third_party/blink/renderer/bindings/core/v8/script_promise_resolver.h"
  #include "third_party/blink/renderer/bindings/core/v8/v8_object_builder.h"
-@@ -25,10 +27,149 @@
- #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
+@@ -27,10 +29,206 @@
  #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
+ #include "third_party/blink/renderer/platform/wtf/text/format.h"
  
 +// MZ: 引入指纹配置接口
 +#include "mz/fingerprint/browser_fingerprint.h"
@@ -29,73 +28,130 @@ index 67cc57071404f..8826a15816097 100644
 +  std::string architecture;  // 例如 "ada", "ampere", "xe-lpg"
 +};
 +
-+// MZ: 根据 GPU 型号推断架构
-+std::string InferArchitecture(const std::string& description) {
-+  // NVIDIA 架构推断
-+  if (description.find("RTX 40") != std::string::npos ||
-+      description.find("RTX 4090") != std::string::npos ||
-+      description.find("RTX 4080") != std::string::npos ||
-+      description.find("RTX 4070") != std::string::npos ||
-+      description.find("RTX 4060") != std::string::npos) {
-+    return "ada";  // Ada Lovelace
-+  }
-+  if (description.find("RTX 30") != std::string::npos ||
-+      description.find("RTX 3090") != std::string::npos ||
-+      description.find("RTX 3080") != std::string::npos ||
-+      description.find("RTX 3070") != std::string::npos ||
-+      description.find("RTX 3060") != std::string::npos) {
-+    return "ampere";
-+  }
-+  if (description.find("RTX 20") != std::string::npos ||
-+      description.find("RTX 2080") != std::string::npos ||
-+      description.find("RTX 2070") != std::string::npos ||
-+      description.find("RTX 2060") != std::string::npos ||
-+      description.find("GTX 16") != std::string::npos ||
-+      description.find("GTX 1660") != std::string::npos ||
-+      description.find("GTX 1650") != std::string::npos) {
-+    return "turing";
-+  }
-+  if (description.find("GTX 10") != std::string::npos ||
-+      description.find("GTX 1080") != std::string::npos ||
-+      description.find("GTX 1070") != std::string::npos ||
-+      description.find("GTX 1060") != std::string::npos) {
-+    return "pascal";
++// MZ: 根据 GPU 型号推断架构。名字必须和 Dawn 上报的一致（gpu_info / dawn
++// GetArchitecture 的取值），否则写一个真实 Chrome 不会出现的值反而更显眼。
++// 推断不出来时返回空串：调用方会把架构置空，不能留着真实显卡的架构。
++bool MzContains(const std::string& haystack, const char* needle) {
++  return haystack.find(needle) != std::string::npos;
++}
++
++std::string InferArchitecture(const std::string& vendor,
++                              const std::string& description) {
++  if (vendor == "nvidia") {
++    // 先匹配新卡：RTX 50 → Blackwell，RTX 40 → Ada（Dawn 叫 lovelace）
++    if (MzContains(description, "RTX 50") || MzContains(description, "RTX PRO")) {
++      return "blackwell";
++    }
++    if (MzContains(description, "RTX 40") || MzContains(description, "RTX 2000 Ada") ||
++        MzContains(description, "RTX 4000 Ada") || MzContains(description, "RTX 6000 Ada")) {
++      return "lovelace";
++    }
++    if (MzContains(description, "RTX 30") || MzContains(description, "RTX A") ||
++        MzContains(description, "MX5") || MzContains(description, "MX4")) {
++      return "ampere";
++    }
++    if (MzContains(description, "RTX 20") || MzContains(description, "GTX 16") ||
++        MzContains(description, "MX2") || MzContains(description, "TITAN RTX") ||
++        MzContains(description, "Quadro RTX") || MzContains(description, "T1000") ||
++        MzContains(description, "T600") || MzContains(description, "T400")) {
++      return "turing";
++    }
++    if (MzContains(description, "GTX 10") || MzContains(description, "MX1") ||
++        MzContains(description, "MX3") || MzContains(description, "Quadro P") ||
++        MzContains(description, "TITAN X") || MzContains(description, "GT 10")) {
++      return "pascal";
++    }
++    if (MzContains(description, "GTX 9") || MzContains(description, "GTX 750") ||
++        MzContains(description, "Quadro M")) {
++      return "maxwell";
++    }
++    return "";
 +  }
 +
-+  // Intel 架构推断
-+  if (description.find("Iris Xe") != std::string::npos ||
-+      description.find("Xe") != std::string::npos) {
-+    return "xe-lpg";
-+  }
-+  if (description.find("UHD Graphics") != std::string::npos ||
-+      description.find("HD Graphics") != std::string::npos) {
-+    return "gen12";
++  if (vendor == "intel") {
++    // Arc B 系（Battlemage）/ Lunar Lake 140V → xe-2；Arc A 系 → xe-hpg；
++    // Meteor/Arrow Lake 的 "Arc Graphics" 核显 → xe-lpg；Iris Xe / UHD 7xx → gen-12lp
++    if (MzContains(description, "Arc(TM) B") || MzContains(description, "Arc B") ||
++        MzContains(description, "140V") ||
++        MzContains(description, "130V")) {
++      return "xe-2lpg";
++    }
++    if (MzContains(description, "Arc(TM) A") || MzContains(description, "Arc A")) {
++      return "xe-hpg";
++    }
++    if (MzContains(description, "Arc")) {
++      return "xe-lpg";
++    }
++    if (MzContains(description, "Iris(R) Xe") || MzContains(description, "Iris Xe") ||
++        MzContains(description, "UHD Graphics 7") || MzContains(description, "UHD Graphics 770") ||
++        MzContains(description, "UHD Graphics 730") || MzContains(description, "UHD Graphics 710") ||
++        MzContains(description, "UHD Graphics Family") || MzContains(description, "Graphics (")) {
++      return "gen-12lp";
++    }
++    if (MzContains(description, "UHD Graphics 6") || MzContains(description, "Iris(R) Plus") ||
++        MzContains(description, "Iris Plus")) {
++      // UHD 6xx（Coffee/Comet Lake）是 gen-9；Ice Lake 的 Iris Plus 是 gen-11
++      return MzContains(description, "Iris") ? "gen-11" : "gen-9";
++    }
++    if (MzContains(description, "HD Graphics 5") || MzContains(description, "HD Graphics 6")) {
++      return "gen-9";
++    }
++    return "";
 +  }
 +
-+  // AMD 架构推断
-+  if (description.find("RX 7") != std::string::npos ||
-+      description.find("RX 7900") != std::string::npos ||
-+      description.find("RX 7800") != std::string::npos ||
-+      description.find("RX 7700") != std::string::npos ||
-+      description.find("RX 7600") != std::string::npos) {
-+    return "rdna3";
-+  }
-+  if (description.find("RX 6") != std::string::npos ||
-+      description.find("RX 6900") != std::string::npos ||
-+      description.find("RX 6800") != std::string::npos ||
-+      description.find("RX 6700") != std::string::npos ||
-+      description.find("RX 6600") != std::string::npos) {
-+    return "rdna2";
-+  }
-+  if (description.find("RX 5") != std::string::npos ||
-+      description.find("RX 5700") != std::string::npos ||
-+      description.find("RX 5600") != std::string::npos ||
-+      description.find("RX 5500") != std::string::npos) {
-+    return "rdna";
++  if (vendor == "amd") {
++    if (MzContains(description, "RX 9")) {
++      return "rdna-4";
++    }
++    if (MzContains(description, "RX 7") || MzContains(description, "Radeon 7") ||
++        MzContains(description, "Radeon 8")) {
++      // RX 7000 独显、Radeon 780M/880M/890M 核显都是 RDNA3/3.5，Dawn 统一报 rdna-3
++      return "rdna-3";
++    }
++    if (MzContains(description, "RX 6") || MzContains(description, "Radeon 6")) {
++      return "rdna-2";
++    }
++    if (MzContains(description, "RX 5")) {
++      // RX 5000 是 RDNA1；RX 580/570 之类三位数的是 GCN4
++      return MzContains(description, "RX 5700") || MzContains(description, "RX 5600") ||
++                     MzContains(description, "RX 5500") || MzContains(description, "RX 5300")
++                 ? "rdna-1"
++                 : "gcn-4";
++    }
++    if (MzContains(description, "Vega") || MzContains(description, "Radeon(TM) Graphics") ||
++        MzContains(description, "Radeon Graphics")) {
++      return "gcn-5";
++    }
++    return "";
 +  }
 +
-+  // 默认返回空字符串
 +  return "";
++}
++
++// MZ: 不同厂商的子组大小（subgroupMinSize/subgroupMaxSize）不同，
++// 和伪装的显卡对不上同样会露馅。取值为 D3D12 下各家驱动的 WaveLaneCountMin/Max。
++bool InferSubgroupSizes(const std::string& vendor,
++                        const std::string& architecture,
++                        uint32_t* min_size,
++                        uint32_t* max_size) {
++  if (vendor == "nvidia") {
++    *min_size = 32;
++    *max_size = 32;
++    return true;
++  }
++  if (vendor == "amd") {
++    // RDNA 支持 wave32/wave64，GCN 只有 wave64
++    const bool gcn = architecture.rfind("gcn", 0) == 0;
++    *min_size = gcn ? 64 : 32;
++    *max_size = 64;
++    return true;
++  }
++  if (vendor == "intel") {
++    *min_size = architecture.rfind("xe-2", 0) == 0 ? 16 : 8;
++    *max_size = 32;
++    return true;
++  }
++  return false;
 +}
 +
 +// MZ: 解析 WebGL renderer 字符串
@@ -153,7 +209,7 @@ index 67cc57071404f..8826a15816097 100644
 +  }
 +
 +  // 推断架构
-+  info.architecture = InferArchitecture(info.description);
++  info.architecture = InferArchitecture(info.vendor, info.description);
 +
 +  return info;
 +}
@@ -161,11 +217,13 @@ index 67cc57071404f..8826a15816097 100644
  GPUSupportedFeatures* MakeFeatureNameSet(wgpu::Adapter adapter) {
    GPUSupportedFeatures* features = MakeGarbageCollected<GPUSupportedFeatures>();
    DCHECK(features->FeatureNameSet().empty());
-@@ -112,6 +253,24 @@ GPUAdapter::GPUAdapter(
+@@ -114,6 +312,31 @@ GPUAdapter::GPUAdapter(
    subgroup_max_size_ = info.subgroupMaxSize;
    power_preference_ = powerProperties.powerPreference;
  
-+  // MZ: 如果配置了 WebGL 指纹，用相同的 GPU 信息替换 WebGPU
++  // MZ: 如果配置了 WebGL 指纹，用相同的 GPU 信息替换 WebGPU。
++  // 厂商一旦换掉，架构、描述、子组大小都必须跟着换：推断不出来就置空，
++  // 绝不能留着真实显卡的值（例如伪装成 NVIDIA 却报 Intel 核显的 xe-lpg）。
 +  std::string configured_vendor = mz::fingerprint::BrowserFingerprint::GetConfiguredWebGLVendor();
 +  std::string configured_renderer = mz::fingerprint::BrowserFingerprint::GetConfiguredWebGLRenderer();
 +
@@ -174,12 +232,17 @@ index 67cc57071404f..8826a15816097 100644
 +
 +    if (!parsed.vendor.empty()) {
 +      vendor_ = String::FromUtf8(parsed.vendor);
-+    }
-+    if (!parsed.description.empty()) {
-+      description_ = String::FromUtf8(parsed.description);
-+    }
-+    if (!parsed.architecture.empty()) {
 +      architecture_ = String::FromUtf8(parsed.architecture);
++      description_ = String::FromUtf8(parsed.description);
++      // 驱动版本、设备 ID 只在开发者模式下暴露，真实值同样不能留
++      driver_ = String();
++      device_ = String();
++      uint32_t min_size = 0;
++      uint32_t max_size = 0;
++      if (InferSubgroupSizes(parsed.vendor, parsed.architecture, &min_size, &max_size)) {
++        subgroup_min_size_ = min_size;
++        subgroup_max_size_ = max_size;
++      }
 +    }
 +  }
 +

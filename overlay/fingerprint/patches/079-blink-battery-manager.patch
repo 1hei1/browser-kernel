@@ -1,0 +1,50 @@
+diff --git a/third_party/blink/renderer/modules/battery/battery_manager.cc b/third_party/blink/renderer/modules/battery/battery_manager.cc
+--- a/third_party/blink/renderer/modules/battery/battery_manager.cc
++++ b/third_party/blink/renderer/modules/battery/battery_manager.cc
+@@ -14,10 +14,37 @@
+ #include "third_party/blink/renderer/core/frame/web_feature.h"
+ #include "third_party/blink/renderer/modules/battery/battery_dispatcher.h"
+ 
++// MZ
++#include <cmath>
++
++#include "mz/fingerprint/browser_fingerprint.h"
++
+ namespace blink {
+ 
+ const char BatteryManager::kSupplementName[] = "BatteryManager";
+ 
++namespace {
++
++// MZ: 环境配置了指纹时，用每个环境固定的电池状态替换真实电池（真实值所有环境都一样，
++// 还会暴露宿主机是笔记本 / 台式机）。固定不变，所以之后也不会派发 levelchange 等事件。
++BatteryStatus MzBatteryStatus(const BatteryStatus& real) {
++  bool charging = true;
++  double level = 1.0;
++  double charging_seconds = 0;
++  double discharging_seconds = 0;
++  if (!mz::fingerprint::BrowserFingerprint::GetBatteryOverride(
++          &charging, &level, &charging_seconds, &discharging_seconds)) {
++    return real;
++  }
++  auto to_delta = [](double seconds) {
++    return std::isinf(seconds) ? base::TimeDelta::Max() : base::Seconds(seconds);
++  };
++  return BatteryStatus(charging, to_delta(charging_seconds),
++                       to_delta(discharging_seconds), level);
++}
++
++}  // namespace
++
+ // static
+ ScriptPromise<BatteryManager> BatteryManager::getBattery(
+     ScriptState* script_state,
+@@ -99,7 +126,7 @@ void BatteryManager::DidUpdateData() {
+   DCHECK(battery_property_);
+ 
+   BatteryStatus old_status = battery_status_;
+-  battery_status_ = *battery_dispatcher_->LatestData();
++  battery_status_ = MzBatteryStatus(*battery_dispatcher_->LatestData());
+ 
+   if (battery_property_->GetState() == BatteryProperty::kPending) {
+     battery_property_->Resolve(this);
