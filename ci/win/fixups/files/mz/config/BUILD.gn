@@ -1,0 +1,18 @@
+# Copyright 2024 Simprint. All rights reserved.
+# 指纹配置存储模块 - 只存储配置，不包含任何逻辑或日志
+
+import("//chrome/version.gni")
+
+source_set("config") {
+  sources = [
+    "fingerprint_config_storage.cc",
+    "fingerprint_config_storage.h",
+  ]
+
+  deps = [
+    "//base",
+  ]
+
+  # UA 主版本固定为内核主版本（见 SetUserAgent）
+  defines = [ "MZ_KERNEL_MAJOR_VERSION=\"$chrome_version_major\"" ]
+}

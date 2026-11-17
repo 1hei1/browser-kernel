@@ -354,6 +354,36 @@ void SetUserAgent(const std::string& user_agent) {
 
   }
 
+#if defined(MZ_KERNEL_MAJOR_VERSION)
+  // MZ: UA 里的 Chromium 系主版本固定为内核自己的主版本。
+  // JS 新 API、TLS/HTTP2 握手特征都来自内核本身，声明成别的版本号检测站一对就露馅；
+  // 只保留配置里的系统、型号等部分。
+  {
+    static const std::regex kChromiumToken(R"(\b(Chrome|Chromium|Edg|CriOS)/(\d+)((?:\.\d+)*))");
+    const std::string kernel_major = MZ_KERNEL_MAJOR_VERSION;
+    std::string pinned;
+    auto begin = std::sregex_iterator(simplified_ua.begin(), simplified_ua.end(), kChromiumToken);
+    size_t last = 0;
+    bool changed = false;
+    for (auto it = begin; it != std::sregex_iterator(); ++it) {
+      const std::smatch& m = *it;
+      pinned += simplified_ua.substr(last, m.position(0) - last);
+      if (m[2].str() != kernel_major) {
+        changed = true;
+        pinned += m[1].str() + "/" + kernel_major + ".0.0.0";
+      } else {
+        pinned += m[0].str();
+      }
+      last = m.position(0) + m.length(0);
+    }
+    pinned += simplified_ua.substr(last);
+    if (changed) {
+      LOG(WARNING) << "MZ: user agent major version pinned to kernel " << kernel_major;
+      simplified_ua = pinned;
+    }
+  }
+#endif
+
   GetUserAgentStorage() = simplified_ua;
 }
 
