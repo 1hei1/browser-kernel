@@ -1,0 +1,17 @@
+name: upload-assets
+on:
+  push:
+    branches: [upload-assets]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  up:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 44006211404 -R 1hei1/browser-kernel -n mz-kernel -D k
+          ls -l k
+          gh release upload v158.0.8127.37-mz1 k/* -R 1hei1/browser-kernel --clobber
