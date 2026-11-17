@@ -196,7 +196,7 @@ const SimpleFontData* FontCache::GetFontData(
   // 按名字查询时也必须存在：否则 system-ui 用着 "Yu Gothic UI"，按名字却查不到，反而露馅。
   auto mz_is_ui_font = [&family](const AtomicString* ui_family) {
     return ui_family && !ui_family->empty() &&
-           EqualIgnoringASCIICase(family, *ui_family);
+           EqualIgnoringAsciiCase(family, *ui_family);
   };
   if (mz_is_ui_font(menu_font_family_name_) ||
       mz_is_ui_font(small_caption_font_family_name_) ||
