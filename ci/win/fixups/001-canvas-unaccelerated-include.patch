@@ -1,0 +1,12 @@
+diff --git a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc b/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+index 2d1ef94..76a1691 100644
+--- a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
++++ b/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+@@ -142,6 +142,7 @@
+ #include "ui/gfx/geometry/skia_conversions.h"
+ #include "v8/include/v8.h"
+ #include "mz/fingerprint/browser_fingerprint.h"
++#include "third_party/blink/renderer/platform/graphics/unaccelerated_static_bitmap_image.h"
+ 
+ namespace blink {
+ 
