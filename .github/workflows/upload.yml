@@ -12,6 +12,6 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 44040298237 -R 1hei1/browser-kernel -n mz-kernel -D k
+          gh run download 44058243871 -R 1hei1/browser-kernel -n mz-kernel -D k
           ls -l k
-          gh release upload v158.0.8127.37-mz3 k/* -R 1hei1/browser-kernel --clobber
+          gh release upload v158.0.8127.37-mz4 k/* -R 1hei1/browser-kernel --clobber
