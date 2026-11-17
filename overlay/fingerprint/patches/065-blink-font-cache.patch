@@ -13,7 +13,7 @@ diff --git a/third_party/blink/renderer/platform/fonts/font_cache.cc b/third_par
  #include "third_party/blink/renderer/platform/fonts/font_description.h"
  #include "third_party/blink/renderer/platform/fonts/font_fallback_map.h"
  #include "third_party/blink/renderer/platform/fonts/font_fallback_priority.h"
-@@ -178,6 +183,18 @@ const SimpleFontData* FontCache::GetFontData(
+@@ -178,6 +183,31 @@ const SimpleFontData* FontCache::GetFontData(
      const FontDescription& font_description,
      const AtomicString& family,
      AlternateFontName altername_font_name) {
@@ -25,6 +25,19 @@ diff --git a/third_party/blink/renderer/platform/fonts/font_cache.cc b/third_par
 +                    family == font_family_names::kFantasy ||
 +                    family == font_family_names::kSystemUi ||
 +                    family.empty();
++#if BUILDFLAG(IS_WIN)
++  // MZ: system-ui / 菜单 / 标题 / 状态栏字体（078 已按环境语言换过）本身就在被网页使用，
++  // 按名字查询时也必须存在：否则 system-ui 用着 "Yu Gothic UI"，按名字却查不到，反而露馅。
++  auto mz_is_ui_font = [&family](const AtomicString* ui_family) {
++    return ui_family && !ui_family->empty() &&
++           EqualIgnoringASCIICase(family, *ui_family);
++  };
++  if (mz_is_ui_font(menu_font_family_name_) ||
++      mz_is_ui_font(small_caption_font_family_name_) ||
++      mz_is_ui_font(status_font_family_name_)) {
++    is_generic = true;
++  }
++#endif
 +  if (!is_generic && !mz::config::IsSystemFontAllowed(family.Utf8())) {
 +    return nullptr;
 +  }

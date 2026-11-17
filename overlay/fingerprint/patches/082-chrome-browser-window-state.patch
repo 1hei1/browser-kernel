@@ -1,0 +1,15 @@
+diff --git a/chrome/browser/ui/browser_window_state.cc b/chrome/browser/ui/browser_window_state.cc
+--- a/chrome/browser/ui/browser_window_state.cc
++++ b/chrome/browser/ui/browser_window_state.cc
+@@ -167,6 +167,11 @@ void GetSavedWindowBoundsAndShowState(BrowserWindowInterface* browser,
+ 
+   internal::UpdateWindowBoundsAndShowStateFromCommandLine(parsed_command_line,
+                                                           bounds, show_state);
++#if !BUILDFLAG(IS_LINUX)
++  // MZ: 启动器用 --window-size 指定的大小在 WindowSizer 之后才生效，这里再按伪装屏幕收一次，
++  // 否则 outerHeight 会大于 screen.height。
++  WindowSizer::MzFitWindowToConfiguredScreen(bounds, show_state);
++#endif
+ }
+ 
+ namespace internal {
