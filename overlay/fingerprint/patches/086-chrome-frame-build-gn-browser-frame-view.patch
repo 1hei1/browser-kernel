@@ -1,0 +1,12 @@
+diff --git a/chrome/browser/ui/views/frame/BUILD.gn b/chrome/browser/ui/views/frame/BUILD.gn
+index 5bb063d..20b8f66 100644
+--- a/chrome/browser/ui/views/frame/BUILD.gn
++++ b/chrome/browser/ui/views/frame/BUILD.gn
+@@ -3089,6 +3089,7 @@ source_set("browser_frame_view_impl") {
+     deps += [
+       "//chrome/browser/taskbar",
+       "//chrome/browser/ui:layout_constants",
++      "//mz/fingerprint",
+       "//ui/display",
+     ]
+   }

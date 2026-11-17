@@ -559,32 +559,28 @@ void BrowserFingerprint::ApplyFontMeasurementNoise(double& width,
     return;
   }
 
-  // 'random' 模式：添加微小的随机噪声到字体测量值
+  // 'random' 模式：按环境给所有测量值乘同一个极小的系数（1 ± 0.0004%~0.0012%）。
+  // 原来是每个值各加 ±0.2px 的独立噪声，有三个破绽：
+  //   1. 同一段文字 canvas measureText 和 DOM 排版宽度差到 0.2px，远大于 1/64px 的布局精度；
+  //   2. measureText("ab") 和 measureText("a") + measureText("b") 对不上；
+  //   3. 不同环境之间噪声分布一样，统计能看出是加噪。
+  // 乘法系数保持了比例和可加性，几百像素宽的文字偏差不到 0.01px（比布局精度还小），
+  // 但浮点结果每个环境都不一样，指纹哈希照样不同。没安装的字体回退后宽度和回退字体相同，
+  // 字体探测的结论不受影响。
   if (mode == "random") {
-    // Canvas 文本偏移：≤0.2px 亚像素偏移
-    // 使用 Canvas seed 确保与 Canvas 渲染一致
-
-    uint64_t seed = GetCanvasSeed();
-
-    // 基于测量值内容生成一致的噪声
-    auto add_noise = [seed](double value, int offset) -> double {
-      if (value == 0.0) return value;  // 不修改零值
-
-      // 使用 Profile seed + 值的哈希生成一致的噪声
-      uint64_t hash = seed ^ static_cast<uint64_t>(value * 10000) ^ offset;
-      hash = (hash * 1103515245 + 12345) & 0x7fffffff;
-
-      // 生成 -0.2 到 +0.2 像素之间的噪声（安全阈值）
-      double noise = ((hash % 1000) / 1000.0 - 0.5) * 0.4;
-      return value + noise;
-    };
-
-    // 对每个测量值添加不同的噪声
-    width = add_noise(width, 1);
-    left = add_noise(left, 2);
-    right = add_noise(right, 3);
-    ascent = add_noise(ascent, 4);
-    descent = add_noise(descent, 5);
+    const uint64_t seed = GetCanvasSeed();
+    uint64_t hash = seed ^ 0x9E3779B97F4A7C15ULL;
+    hash ^= hash >> 33;
+    hash *= 0xFF51AFD7ED558CCDULL;
+    hash ^= hash >> 33;
+    // [4e-6, 1.2e-5]，正负随机
+    const double magnitude = 4e-6 + (hash % 8001) * 1e-9;
+    const double factor = ((hash >> 20) & 1) ? 1.0 + magnitude : 1.0 - magnitude;
+    width *= factor;
+    left *= factor;
+    right *= factor;
+    ascent *= factor;
+    descent *= factor;
   }
 }
 

@@ -1,0 +1,39 @@
+diff --git a/third_party/blink/renderer/core/frame/screen.cc b/third_party/blink/renderer/core/frame/screen.cc
+index e0adfa8..0cf6564 100644
+--- a/third_party/blink/renderer/core/frame/screen.cc
++++ b/third_party/blink/renderer/core/frame/screen.cc
+@@ -138,12 +138,22 @@ unsigned Screen::pixelDepth() const {
+ }
+ 
+ int Screen::availLeft() const {
++  // MZ: 伪装成单屏、任务栏在底部：可用区域从屏幕左上角开始
++  if (mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth() >
++      0) {
++    return 0;
++  }
+   if (!DomWindow())
+     return 0;
+   return GetRect(/*available=*/true).x();
+ }
+ 
+ int Screen::availTop() const {
++  // MZ: 伪装成单屏、任务栏在底部：可用区域从屏幕左上角开始
++  if (mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth() >
++      0) {
++    return 0;
++  }
+   if (!DomWindow())
+     return 0;
+   return GetRect(/*available=*/true).y();
+@@ -195,6 +205,11 @@ bool Screen::isExtended() const {
+   if (!DomWindow()) {
+     return false;
+   }
++  // MZ: 伪装的是单块屏幕，多显示器标记不能露出来
++  if (mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth() >
++      0) {
++    return false;
++  }
+   auto* context = GetExecutionContext();
+   if (!context->IsFeatureEnabled(
+           network::mojom::PermissionsPolicyFeature::kWindowManagement)) {

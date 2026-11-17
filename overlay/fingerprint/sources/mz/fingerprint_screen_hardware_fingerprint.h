@@ -55,6 +55,19 @@ class ScreenHardwareFingerprint {
 
   // 获取配置的设备内存
   static double GetConfiguredDeviceMemory();
+
+  // MZ: 伪装屏幕的可用高度（屏幕高度减任务栏 40），与 blink Screen::availHeight 一致。
+  // 没有配置分辨率时返回 0。
+  static int GetConfiguredAvailHeight();
+
+  // MZ: 把真实的窗口矩形（DIP，屏幕坐标）收进伪装屏幕：宽高不超过伪装屏幕的
+  // width / availHeight，位置落在 [0, width - w] x [0, availHeight - h]。
+  // 网页读到的 window.screenX/screenY/outerWidth/outerHeight 和鼠标事件的
+  // screenX/screenY 都按这个结果换算。没有配置分辨率时不改动，返回 false。
+  static bool FitWindowRectToConfiguredScreen(int* x,
+                                              int* y,
+                                              int* width,
+                                              int* height);
 };
 
 }  // namespace fingerprint
