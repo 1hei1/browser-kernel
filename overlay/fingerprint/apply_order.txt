@@ -90,3 +90,8 @@
 075-content-devtools-http-token.patch
 076-components-component-updater-no-update-checks.patch
 077-net-tcp-client-socket-mz-local-ports.patch
+
+# MZ 第二批加固
+078-blink-font-cache-skia-win-system-ui.patch
+079-blink-battery-manager.patch
+080-blink-battery-build-gn.patch

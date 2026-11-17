@@ -1,15 +1,87 @@
 diff --git a/chrome/browser/ui/window_sizer/window_sizer.cc b/chrome/browser/ui/window_sizer/window_sizer.cc
 --- a/chrome/browser/ui/window_sizer/window_sizer.cc
 +++ b/chrome/browser/ui/window_sizer/window_sizer.cc
-@@ -25,6 +25,7 @@
+@@ -25,6 +25,8 @@
  #include "ui/base/ui_base_switches.h"
  #include "ui/display/display.h"
  #include "ui/display/screen.h"
++#include "mz/fingerprint/screen_hardware_fingerprint.h"
 +#include "mz/fingerprint/window_settings.h"
  
  #if BUILDFLAG(IS_CHROMEOS)
  #include "chrome/browser/ui/window_sizer/window_sizer_chromeos.h"
-@@ -252,6 +253,56 @@ void WindowSizer::DetermineWindowBoundsAndShowState(
+@@ -214,6 +216,62 @@ WindowSizer::WindowSizer(std::unique_ptr<StateProvider> state_provider,
+ 
+ WindowSizer::~WindowSizer() = default;
+ 
++#if !BUILDFLAG(IS_LINUX)
++namespace {
++
++// MZ: 伪装的屏幕比真实工作区小时，窗口不能比伪装的屏幕大：outerWidth 大于
++// screen.width 是真实浏览器不可能出现的组合。最大化 / 全屏 / 记住的大窗口
++// 都改成普通窗口，大小正好是伪装屏幕的可用区域（看起来就像在那块屏幕上最大化）。
++void MzFitWindowToConfiguredScreen(gfx::Rect* bounds,
++                                   ui::mojom::WindowShowState* show_state) {
++  const int screen_width =
++      mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth();
++  const int screen_height =
++      mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenHeight();
++  if (screen_width <= 0 || screen_height <= 0) {
++    return;
++  }
++  // 与 blink Screen::availHeight 的伪装保持一致（屏幕高度减任务栏 40）
++  constexpr int kWindowsTaskbarHeight = 40;
++  const int avail_height = screen_height > 2 * kWindowsTaskbarHeight
++                               ? screen_height - kWindowsTaskbarHeight
++                               : screen_height;
++
++  const gfx::Rect work_area =
++      display::Screen::Get()->GetDisplayMatching(*bounds).work_area();
++  const int max_width = std::min(screen_width, work_area.width());
++  const int max_height = std::min(avail_height, work_area.height());
++  if (max_width <= 0 || max_height <= 0) {
++    return;
++  }
++  const bool real_area_is_larger =
++      work_area.width() > max_width || work_area.height() > max_height;
++
++  if (*show_state == ui::mojom::WindowShowState::kMaximized ||
++      *show_state == ui::mojom::WindowShowState::kFullscreen) {
++    if (!real_area_is_larger) {
++      return;  // 真实屏幕不比伪装的大，最大化不会露馅
++    }
++    *show_state = ui::mojom::WindowShowState::kNormal;
++    *bounds = gfx::Rect(work_area.x(), work_area.y(), max_width, max_height);
++    return;
++  }
++
++  if (bounds->IsEmpty()) {
++    return;
++  }
++  if (bounds->width() <= max_width && bounds->height() <= max_height) {
++    return;
++  }
++  gfx::Rect fitted(bounds->x(), bounds->y(), std::min(bounds->width(), max_width),
++                   std::min(bounds->height(), max_height));
++  fitted.AdjustToFit(work_area);
++  *bounds = fitted;
++}
++
++}  // namespace
++#endif  // !BUILDFLAG(IS_LINUX)
++
+ // static
+ void WindowSizer::GetBrowserWindowBoundsAndShowState(
+     const gfx::Rect& specified_bounds,
+@@ -245,6 +303,7 @@ void WindowSizer::GetBrowserWindowBoundsAndShowState(
+   *show_state = GetWindowDefaultShowState(browser);
+   *bounds = specified_bounds;
+   sizer.DetermineWindowBoundsAndShowState(specified_bounds, bounds, show_state);
++  MzFitWindowToConfiguredScreen(bounds, show_state);
+ }
+ #endif  // !BUILDFLAG(IS_LINUX)
+ 
+@@ -252,6 +311,56 @@ void WindowSizer::DetermineWindowBoundsAndShowState(
      const gfx::Rect& specified_bounds,
      gfx::Rect* bounds,
      ui::mojom::WindowShowState* show_state) {
