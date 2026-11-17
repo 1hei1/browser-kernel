@@ -1,0 +1,62 @@
+diff --git a/third_party/blink/renderer/core/frame/local_dom_window.cc b/third_party/blink/renderer/core/frame/local_dom_window.cc
+index fae0f15..1c993b3 100644
+--- a/third_party/blink/renderer/core/frame/local_dom_window.cc
++++ b/third_party/blink/renderer/core/frame/local_dom_window.cc
+@@ -244,6 +244,21 @@ namespace {
+ // Emulation.setTimezoneOverride): it updates ICU, notifies V8 and all workers, and
+ // survives host timezone change events. Runs once per renderer process, on the
+ // first window (the fingerprint config is imported before any page is created).
++// MZ: 网页读到的窗口矩形（screenX/screenY/outerWidth/outerHeight）收进伪装屏幕，
++// 不会出现 outerWidth 大于 screen.width、或窗口落在伪装屏幕之外的组合
++// （真实屏幕更大、有第二块屏、或用户手动拖动/最大化时都会这样）。
++gfx::Rect MzReportedWindowRect(const gfx::Rect& real) {
++  int x = real.x();
++  int y = real.y();
++  int width = real.width();
++  int height = real.height();
++  if (!mz::fingerprint::ScreenHardwareFingerprint::
++          FitWindowRectToConfiguredScreen(&x, &y, &width, &height)) {
++    return real;
++  }
++  return gfx::Rect(x, y, width, height);
++}
++
+ void ApplyConfiguredTimeZoneOnce() {
+   static bool done = false;
+   if (done) {
+@@ -1769,7 +1784,7 @@ int LocalDOMWindow::outerHeight() const {
+         lroundf(chrome_client.RootWindowRect(*frame).height() *
+                 chrome_client.GetScreenInfo(*frame).device_scale_factor));
+   }
+-  int height = chrome_client.RootWindowRect(*frame).height();
++  int height = MzReportedWindowRect(chrome_client.RootWindowRect(*frame)).height();
+   if (document() && document()->TextScaleMetaTagPresent()) {
+     height = static_cast<int>(lroundf(
+         height * chrome_client.GetScreenInfo(*frame).text_scale_multiplier));
+@@ -1801,7 +1816,7 @@ int LocalDOMWindow::outerWidth() const {
+         lroundf(chrome_client.RootWindowRect(*frame).width() *
+                 chrome_client.GetScreenInfo(*frame).device_scale_factor));
+   }
+-  int width = chrome_client.RootWindowRect(*frame).width();
++  int width = MzReportedWindowRect(chrome_client.RootWindowRect(*frame)).width();
+   if (document() && document()->TextScaleMetaTagPresent()) {
+     width = static_cast<int>(lroundf(
+         width * chrome_client.GetScreenInfo(*frame).text_scale_multiplier));
+@@ -1877,7 +1892,7 @@ int LocalDOMWindow::screenX() const {
+         lroundf(chrome_client.RootWindowRect(*frame).x() *
+                 chrome_client.GetScreenInfo(*frame).device_scale_factor));
+   }
+-  int screenX = chrome_client.RootWindowRect(*frame).x();
++  int screenX = MzReportedWindowRect(chrome_client.RootWindowRect(*frame)).x();
+   if (document() && document()->TextScaleMetaTagPresent()) {
+     screenX = static_cast<int>(lroundf(
+         screenX * chrome_client.GetScreenInfo(*frame).text_scale_multiplier));
+@@ -1902,7 +1917,7 @@ int LocalDOMWindow::screenY() const {
+         lroundf(chrome_client.RootWindowRect(*frame).y() *
+                 chrome_client.GetScreenInfo(*frame).device_scale_factor));
+   }
+-  int screenY = chrome_client.RootWindowRect(*frame).y();
++  int screenY = MzReportedWindowRect(chrome_client.RootWindowRect(*frame)).y();
+   if (document() && document()->TextScaleMetaTagPresent()) {
+     screenY = static_cast<int>(lroundf(
+         screenY * chrome_client.GetScreenInfo(*frame).text_scale_multiplier));

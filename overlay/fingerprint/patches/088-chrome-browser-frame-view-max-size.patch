@@ -1,0 +1,63 @@
+diff --git a/chrome/browser/ui/views/frame/browser_frame_view.cc b/chrome/browser/ui/views/frame/browser_frame_view.cc
+index 46dea46..6cc93cb 100644
+--- a/chrome/browser/ui/views/frame/browser_frame_view.cc
++++ b/chrome/browser/ui/views/frame/browser_frame_view.cc
+@@ -4,6 +4,7 @@
+ 
+ #include "chrome/browser/ui/views/frame/browser_frame_view.h"
+ 
++#include <algorithm>
+ #include <string_view>
+ 
+ #include "base/command_line.h"
+@@ -36,6 +37,7 @@
+ #include "ui/views/layout/layout_types.h"
+ #include "ui/views/view.h"
+ #include "ui/views/view_class_properties.h"
++#include "ui/views/widget/widget.h"
+ #include "ui/views/window/hit_test_utils.h"
+ 
+ #if BUILDFLAG(IS_WIN)
+@@ -43,6 +45,9 @@
+ #include "chrome/browser/ui/layout_constants.h"
+ #include "ui/display/win/screen_win.h"
+ #include "ui/views/win/hwnd_util.h"
++#include "mz/fingerprint/screen_hardware_fingerprint.h"
++#include "ui/display/display.h"
++#include "ui/display/screen.h"
+ #endif
+ 
+ namespace {
+@@ -373,6 +378,32 @@ void BrowserFrameView::Layout(PassKey p) {
+   }
+ }
+ 
++gfx::Size BrowserFrameView::GetMaximumSize() const {
++#if BUILDFLAG(IS_WIN)
++  // MZ: Windows 最大化时窗口大小受 WM_GETMINMAXINFO 的 ptMaxTrackSize 限制，
++  // 这里给出伪装屏幕的大小（DIP），最大化、拖边框、Aero Snap 都不会超过它。
++  // 真实工作区不比伪装屏幕大时不限制，保持原生行为。
++  const int screen_width =
++      mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth();
++  const int avail_height =
++      mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredAvailHeight();
++  const views::Widget* widget = GetWidget();
++  if (screen_width > 0 && avail_height > 0 && widget &&
++      widget->GetNativeWindow()) {
++    const gfx::Rect work_area =
++        display::Screen::Get()
++            ->GetDisplayNearestWindow(widget->GetNativeWindow())
++            .work_area();
++    if (work_area.width() > screen_width ||
++        work_area.height() > avail_height) {
++      return gfx::Size(std::min(screen_width, work_area.width()),
++                       std::min(avail_height, work_area.height()));
++    }
++  }
++#endif
++  return FrameView::GetMaximumSize();
++}
++
+ views::View::Views BrowserFrameView::GetChildrenInZOrder() {
+   auto views = FrameView::GetChildrenInZOrder();
+   // If the show browser frame view is in the list, move it to the end so it

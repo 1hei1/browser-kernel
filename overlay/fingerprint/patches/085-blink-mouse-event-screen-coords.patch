@@ -1,0 +1,42 @@
+diff --git a/third_party/blink/renderer/core/events/mouse_event.cc b/third_party/blink/renderer/core/events/mouse_event.cc
+index 7f9b51b..31db845 100644
+--- a/third_party/blink/renderer/core/events/mouse_event.cc
++++ b/third_party/blink/renderer/core/events/mouse_event.cc
+@@ -22,6 +22,8 @@
+ 
+ #include "third_party/blink/renderer/core/events/mouse_event.h"
+ 
++#include "mz/fingerprint/screen_hardware_fingerprint.h"
++
+ #include "third_party/blink/public/common/input/web_pointer_properties.h"
+ #include "third_party/blink/renderer/bindings/core/v8/v8_mouse_event_init.h"
+ #include "third_party/blink/renderer/core/dom/document.h"
+@@ -39,6 +41,7 @@
+ #include "third_party/blink/renderer/core/input/input_device_capabilities.h"
+ #include "third_party/blink/renderer/core/layout/layout_object.h"
+ #include "third_party/blink/renderer/core/layout/layout_view.h"
++#include "third_party/blink/renderer/core/page/chrome_client.h"
+ #include "third_party/blink/renderer/core/page/page.h"
+ #include "third_party/blink/renderer/core/page/pointer_lock_controller.h"
+ #include "third_party/blink/renderer/core/paint/paint_layer.h"
+@@ -219,6 +222,20 @@ void MouseEvent::SetCoordinatesFromWebPointerProperties(
+     client_point = gfx::ScalePoint(frame_point, inverse_zoom_factor);
+   }
+ 
++  // MZ: window.screenX/screenY 收进了伪装屏幕（见 LocalDOMWindow），鼠标的屏幕坐标
++  // 按同样的位移换算，保证 event.screenX - event.clientX 和窗口位置对得上。
++  if (dom_window && dom_window->GetFrame() &&
++      mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth() >
++          0) {
++    LocalFrame* frame = dom_window->GetFrame();
++    if (Page* page = frame->GetPage()) {
++      const gfx::Rect real_window =
++          page->GetChromeClient().RootWindowRect(*frame);
++      screen_point.Offset(
++          static_cast<float>(dom_window->screenX() - real_window.x()),
++          static_cast<float>(dom_window->screenY() - real_window.y()));
++    }
++  }
+   initializer->setScreenX(screen_point.x());
+   initializer->setScreenY(screen_point.y());
+   initializer->setClientX(client_point.x());

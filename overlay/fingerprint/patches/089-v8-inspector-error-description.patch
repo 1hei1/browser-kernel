@@ -1,0 +1,113 @@
+diff --git a/v8/src/inspector/value-mirror.cc b/v8/src/inspector/value-mirror.cc
+--- a/v8/src/inspector/value-mirror.cc
++++ b/v8/src/inspector/value-mirror.cc
+@@ -326,6 +326,47 @@
+   return function->ScriptId() == v8::UnboundScript::kNoScriptId;
+ }
+ 
++// MZ: 属性不在 Error 对象自身上时，沿原型链查找，但不执行任何网页代码：
++// 遇到 Proxy、或网页自己定义的 getter 就放弃。原来直接 object->Get() 会触发
++// 原型上的 Proxy trap / getter，网页借 console.log(err) 就能判断 DevTools/CDP
++// 的 Runtime 域是否开启（自动化检测常用手法）。
++v8::MaybeLocal<v8::Value> getInheritedErrorProperty(
++    v8::Local<v8::Context> context, v8::Local<v8::Object> object,
++    v8::Local<v8::String> name) {
++  v8::Isolate* isolate = v8::Isolate::GetCurrent();
++  v8::Local<v8::Value> current = object->GetPrototype();
++  for (int depth = 0; depth < 64 && current->IsObject(); ++depth) {
++    if (current->IsProxy()) return v8::MaybeLocal<v8::Value>();
++    v8::Local<v8::Object> holder = current.As<v8::Object>();
++    v8::Local<v8::Value> descriptor;
++    if (!holder->GetOwnPropertyDescriptor(context, name).ToLocal(&descriptor)) {
++      return v8::MaybeLocal<v8::Value>();
++    }
++    if (descriptor->IsObject()) {
++      v8::Local<v8::Object> descriptorObject = descriptor.As<v8::Object>();
++      v8::Maybe<bool> hasGet = descriptorObject->HasOwnProperty(
++          context, toV8String(isolate, "get"));
++      if (hasGet.IsNothing()) return v8::MaybeLocal<v8::Value>();
++      if (!hasGet.FromJust()) {
++        return descriptorObject->Get(context, toV8String(isolate, "value"));
++      }
++      if (v8::debug::SideEffectCheckScope::IsActive(isolate)) {
++        return v8::MaybeLocal<v8::Value>();
++      }
++      v8::Local<v8::Value> getter;
++      if (!descriptorObject->Get(context, toV8String(isolate, "get"))
++               .ToLocal(&getter) ||
++          !getter->IsFunction() ||
++          !isBuiltinGetter(getter.As<v8::Function>())) {
++        return v8::MaybeLocal<v8::Value>();
++      }
++      return object->Get(context, name);
++    }
++    current = holder->GetPrototype();
++  }
++  return v8::MaybeLocal<v8::Value>();
++}
++
+ v8::MaybeLocal<v8::Value> getErrorProperty(v8::Local<v8::Context> context,
+                                            v8::Local<v8::Object> object,
+                                            v8::Local<v8::String> name) {
+@@ -337,7 +378,9 @@
+   if (!object->GetOwnPropertyDescriptor(context, name).ToLocal(&descriptor)) {
+     return v8::MaybeLocal<v8::Value>();
+   }
+-  if (!descriptor->IsObject()) return object->Get(context, name);
++  if (!descriptor->IsObject()) {
++    return getInheritedErrorProperty(context, object, name);
++  }
+ 
+   v8::Local<v8::Object> descriptorObject = descriptor.As<v8::Object>();
+   v8::Maybe<bool> hasGet =
+@@ -365,6 +408,41 @@
+   return object->Get(context, name);
+ }
+ 
++// MZ: 读取内置的 error.stack 会按需格式化调用栈，格式化时会调用网页设置的
++// Error.prepareStackTrace（或它的 getter）。没开 DevTools 时 console.log(err)
++// 不会碰 stack，开了就会——网页借此判断 CDP Runtime 是否开启。
++// 只看属性描述符，不执行任何网页代码；判断不了时按“有风险”处理。
++bool errorStackMayRunUserCode(v8::Local<v8::Context> context) {
++  v8::Isolate* isolate = v8::Isolate::GetCurrent();
++  v8::TryCatch tryCatch(isolate);
++  v8::Local<v8::Value> errorDescriptor;
++  if (!context->Global()
++           ->GetOwnPropertyDescriptor(context, toV8String(isolate, "Error"))
++           .ToLocal(&errorDescriptor) ||
++      !errorDescriptor->IsObject()) {
++    return true;
++  }
++  v8::Local<v8::Object> errorDescriptorObject =
++      errorDescriptor.As<v8::Object>();
++  v8::Maybe<bool> hasValue = errorDescriptorObject->HasOwnProperty(
++      context, toV8String(isolate, "value"));
++  if (hasValue.IsNothing() || !hasValue.FromJust()) return true;
++  v8::Local<v8::Value> errorConstructor;
++  if (!errorDescriptorObject->Get(context, toV8String(isolate, "value"))
++           .ToLocal(&errorConstructor) ||
++      !errorConstructor->IsObject() || errorConstructor->IsProxy()) {
++    return true;
++  }
++  v8::Local<v8::Value> prepareDescriptor;
++  if (!errorConstructor.As<v8::Object>()
++           ->GetOwnPropertyDescriptor(
++               context, toV8String(isolate, "prepareStackTrace"))
++           .ToLocal(&prepareDescriptor)) {
++    return true;
++  }
++  return !prepareDescriptor->IsUndefined();
++}
++
+ // Build a description from an exception using the following pattern:
+ //   * The first line is "<name || constructor name>: <message property>". We
+ //     use the constructor name if the "name" property is "Error". Most custom
+@@ -392,7 +470,7 @@
+   }
+ 
+   std::optional<String16> stack;
+-  {
++  if (!errorStackMayRunUserCode(context)) {
+     v8::Local<v8::Value> stackValue;
+     if (getErrorProperty(context, object, toV8String(isolate, "stack"))
+             .ToLocal(&stackValue) &&

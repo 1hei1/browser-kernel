@@ -9,6 +9,7 @@
 #include "base/no_destructor.h"
 #include "base/strings/string_number_conversions.h"
 
+#include <algorithm>
 #include <sstream>
 
 #define MZ_LOG(msg) LOG(INFO) << msg
@@ -124,6 +125,34 @@ int ScreenHardwareFingerprint::GetConfiguredHardwareConcurrency() {
 // static
 double ScreenHardwareFingerprint::GetConfiguredDeviceMemory() {
   return mz::config::GetClampedDeviceMemory();
+}
+
+// static
+int ScreenHardwareFingerprint::GetConfiguredAvailHeight() {
+  const int height = GetConfiguredScreenHeight();
+  if (height <= 0) {
+    return 0;
+  }
+  constexpr int kWindowsTaskbarHeight = 40;
+  return height > 2 * kWindowsTaskbarHeight ? height - kWindowsTaskbarHeight
+                                            : height;
+}
+
+// static
+bool ScreenHardwareFingerprint::FitWindowRectToConfiguredScreen(int* x,
+                                                                int* y,
+                                                                int* width,
+                                                                int* height) {
+  const int screen_width = GetConfiguredScreenWidth();
+  const int avail_height = GetConfiguredAvailHeight();
+  if (screen_width <= 0 || avail_height <= 0) {
+    return false;
+  }
+  *width = std::clamp(*width, 0, screen_width);
+  *height = std::clamp(*height, 0, avail_height);
+  *x = std::clamp(*x, 0, screen_width - *width);
+  *y = std::clamp(*y, 0, avail_height - *height);
+  return true;
 }
 
 }  // namespace fingerprint

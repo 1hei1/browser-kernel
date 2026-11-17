@@ -1,0 +1,13 @@
+diff --git a/chrome/browser/ui/views/frame/browser_frame_view.h b/chrome/browser/ui/views/frame/browser_frame_view.h
+index 223342e..c409234 100644
+--- a/chrome/browser/ui/views/frame/browser_frame_view.h
++++ b/chrome/browser/ui/views/frame/browser_frame_view.h
+@@ -200,6 +200,8 @@ class BrowserFrameView : public views::FrameView {
+   // views::FrameView:
+   void Layout(PassKey) override;
+   Views GetChildrenInZOrder() override;
++  // MZ: 配置了伪装分辨率时，窗口（包括手动最大化、拖拽调整大小）不能大于伪装屏幕。
++  gfx::Size GetMaximumSize() const override;
+ 
+  protected:
+   // Called when `frame_`'s "paint as active" state has changed.
