@@ -217,13 +217,14 @@ WindowSizer::WindowSizer(std::unique_ptr<StateProvider> state_provider,
 WindowSizer::~WindowSizer() = default;
 
 #if !BUILDFLAG(IS_LINUX)
-namespace {
-
-// MZ: 伪装的屏幕比真实工作区小时，窗口不能比伪装的屏幕大：outerWidth 大于
-// screen.width 是真实浏览器不可能出现的组合。最大化 / 全屏 / 记住的大窗口
-// 都改成普通窗口，大小正好是伪装屏幕的可用区域（看起来就像在那块屏幕上最大化）。
-void MzFitWindowToConfiguredScreen(gfx::Rect* bounds,
-                                   ui::mojom::WindowShowState* show_state) {
+// MZ: 伪装的屏幕比真实工作区小时，窗口不能超出伪装的屏幕：outerWidth 大于
+// screen.width、或 screenX + outerWidth 超过屏幕宽度，是真实单屏浏览器不可能出现的组合。
+// 最大化 / 全屏 / 记住的大窗口 / 启动器 --window-size 指定的大窗口，都改成普通窗口，
+// 并整体放进伪装屏幕的可用区域（从真实工作区左上角算起）。
+// static
+void WindowSizer::MzFitWindowToConfiguredScreen(
+    gfx::Rect* bounds,
+    ui::mojom::WindowShowState* show_state) {
   const int screen_width =
       mz::fingerprint::ScreenHardwareFingerprint::GetConfiguredScreenWidth();
   const int screen_height =
@@ -244,6 +245,8 @@ void MzFitWindowToConfiguredScreen(gfx::Rect* bounds,
   if (max_width <= 0 || max_height <= 0) {
     return;
   }
+  const gfx::Rect spoofed_area(work_area.x(), work_area.y(), max_width,
+                               max_height);
   const bool real_area_is_larger =
       work_area.width() > max_width || work_area.height() > max_height;
 
@@ -253,23 +256,21 @@ void MzFitWindowToConfiguredScreen(gfx::Rect* bounds,
       return;  // 真实屏幕不比伪装的大，最大化不会露馅
     }
     *show_state = ui::mojom::WindowShowState::kNormal;
-    *bounds = gfx::Rect(work_area.x(), work_area.y(), max_width, max_height);
+    *bounds = spoofed_area;
     return;
   }
 
-  if (bounds->IsEmpty()) {
+  if (bounds->IsEmpty() || !real_area_is_larger) {
     return;
   }
-  if (bounds->width() <= max_width && bounds->height() <= max_height) {
+  if (spoofed_area.Contains(*bounds)) {
     return;
   }
-  gfx::Rect fitted(bounds->x(), bounds->y(), std::min(bounds->width(), max_width),
-                   std::min(bounds->height(), max_height));
-  fitted.AdjustToFit(work_area);
+  // AdjustToFit 先缩小到不超过 spoofed_area，再平移进去
+  gfx::Rect fitted = *bounds;
+  fitted.AdjustToFit(spoofed_area);
   *bounds = fitted;
 }
-
-}  // namespace
 #endif  // !BUILDFLAG(IS_LINUX)
 
 // static

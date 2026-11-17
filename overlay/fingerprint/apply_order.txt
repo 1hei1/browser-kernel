@@ -95,3 +95,5 @@
 078-blink-font-cache-skia-win-system-ui.patch
 079-blink-battery-manager.patch
 080-blink-battery-build-gn.patch
+081-chrome-window-sizer-h.patch
+082-chrome-browser-window-state.patch
