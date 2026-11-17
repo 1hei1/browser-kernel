@@ -289,6 +289,7 @@ def cmd_fixups(_args) -> None:
 
     fixups/files/<path>   copied over chromium/src/<path>
     fixups/*.patch        applied once each (recorded in src/.mz-fixups-applied)
+    fixups/*.py           run once each with chromium/src as argv[1]
     """
     root = KERNEL / "ci" / "win" / "fixups"
     if not root.is_dir():
@@ -309,9 +310,20 @@ def cmd_fixups(_args) -> None:
     for patch in sorted(root.glob("*.patch")):
         if patch.name in done:
             continue
-        run(["git", "apply", "--unsafe-paths", "--whitespace=nowarn", "-C1", patch], cwd=SRC)
+        try:
+            run(["git", "apply", "--unsafe-paths", "--whitespace=nowarn", "-C1", patch], cwd=SRC)
+        except subprocess.CalledProcessError:
+            # Windows 上恢复出来的树可能是 CRLF，忽略空白再试一次
+            run(["git", "apply", "--unsafe-paths", "--ignore-whitespace", "-C1", patch], cwd=SRC)
         done.add(patch.name)
         log(f"fixup patch: {patch.name}")
+    # fixups/*.py：脚本自行修改 chromium/src（参数为 src 路径），只跑一次
+    for script in sorted(root.glob("*.py")):
+        if script.name in done:
+            continue
+        run([sys.executable, script, SRC])
+        done.add(script.name)
+        log(f"fixup script: {script.name}")
     marker.write_text("\n".join(sorted(done)) + "\n", encoding="utf-8")
 
 
