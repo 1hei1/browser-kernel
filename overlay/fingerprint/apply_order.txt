@@ -68,7 +68,6 @@
 055-blink-rtc-peer-connection-handler.patch
 056-blink-speech-build-gn.patch
 057-blink-speech-synthesis.patch
-058-blink-audio-buffer.patch
 059-blink-webgl-rendering-context-base.patch
 060-blink-webgpu-build-gn.patch
 061-blink-webgpu-gpu.patch
@@ -107,3 +106,4 @@
 088-chrome-browser-frame-view-max-size.patch
 089-v8-inspector-error-description.patch
 090-blink-canvas-noise-only-after-draw.patch
+091-blink-offline-audio-context-noise.patch

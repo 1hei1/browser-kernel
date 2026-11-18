@@ -1,0 +1,28 @@
+diff --git a/third_party/blink/renderer/modules/webaudio/offline_audio_context.cc b/third_party/blink/renderer/modules/webaudio/offline_audio_context.cc
+--- a/third_party/blink/renderer/modules/webaudio/offline_audio_context.cc
++++ b/third_party/blink/renderer/modules/webaudio/offline_audio_context.cc
+@@ -52,6 +52,7 @@
+ #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
+ #include "third_party/blink/renderer/platform/wtf/math_extras.h"
+ #include "third_party/blink/renderer/platform/wtf/text/strcat.h"
++#include "mz/fingerprint/browser_fingerprint.h"
+ 
+ namespace blink {
+ 
+@@ -578,6 +579,16 @@ void OfflineAudioContext::OnChunkRendered() {
+   Member<AudioBuffer> rendered_buffer = pending_render_targets_.front();
+ 
+   CHECK(rendered_buffer);
++  // MZ: Audio 指纹噪声只在离线渲染完成时加一次，直接改渲染结果。
++  // 不再在 getChannelData/copyFromChannel 里改：那样会改掉网页自己写进 AudioBuffer 的数据，
++  // 被 CreepJS 等的写入读回陷阱（AUDIO_TRAP）识别；而且两种读取方式结果一致。
++  for (unsigned i = 0; i < rendered_buffer->numberOfChannels(); ++i) {
++    NotShared<DOMFloat32Array> channel = rendered_buffer->getChannelData(i);
++    if (channel && channel->Data()) {
++      mz::fingerprint::BrowserFingerprint::ApplyAudioNoise(channel->Data(),
++                                                           channel->length());
++    }
++  }
+   // Keep the target queued across `Resolve()` so synchronous thenable getters
+   // can enqueue more chunks without starting a duplicate render.
+   resolver->Resolve(rendered_buffer.Get());
