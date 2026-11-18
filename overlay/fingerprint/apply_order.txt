@@ -106,3 +106,4 @@
 087-chrome-browser-frame-view-h.patch
 088-chrome-browser-frame-view-max-size.patch
 089-v8-inspector-error-description.patch
+090-blink-canvas-noise-only-after-draw.patch

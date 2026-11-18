@@ -13,8 +13,8 @@ diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_c
      }
    }
  
-+  // MZ: 应用 Canvas 指纹噪声
-+  if (image_data) {
++  // MZ: 应用 Canvas 指纹噪声（只对做过真实绘制的画布）
++  if (image_data && MzHasDrawn()) {
 +    SkPixmap pixmap = image_data->GetSkPixmap();
 +    if (pixmap.writable_addr()) {
 +      mz::fingerprint::BrowserFingerprint::ApplyCanvasNoise(
