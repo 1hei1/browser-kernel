@@ -1,0 +1,70 @@
+diff --git a/third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h b/third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h
+--- a/third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h
++++ b/third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h
+@@ -172,6 +172,9 @@ class CORE_EXPORT CanvasRenderingContext
+ 
+   CanvasRenderingContextHost* Host() const { return host_.Get(); }
+ 
++  // MZ: 导出时是否加 Canvas 指纹噪声。2D 画布只在做过真实绘制后返回 true，其余上下文保持原行为。
++  virtual bool MzShouldApplyCanvasNoise() const { return true; }
++
+   virtual bool IsOpaque() const = 0;
+ 
+   virtual scoped_refptr<StaticBitmapImage> GetImage() = 0;
+diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_2d_recorder_context.h b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_2d_recorder_context.h
+--- a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_2d_recorder_context.h
++++ b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_2d_recorder_context.h
+@@ -395,6 +395,9 @@ class MODULES_EXPORT Canvas2DRecorderContext : public CanvasPath {
+ 
+   const UsageCounters& GetUsage();
+ 
++  // MZ: 画布是否做过真实绘制（决定是否加 Canvas 指纹噪声）。
++  bool MzHasDrawn() const { return mz_has_drawn_; }
++
+  protected:
+   explicit Canvas2DRecorderContext(float effective_zoom = 1.0f);
+ 
+@@ -628,6 +631,8 @@ class MODULES_EXPORT Canvas2DRecorderContext : public CanvasPath {
+   cc::PaintFlags GetClearFlags() const;
+ 
+   bool origin_tainted_by_content_ = false;
++  // MZ: 是否经过 Draw()；只用 putImageData/clearRect 的画布保持原样，避免写入后读回对比被识别为篡改。
++  bool mz_has_drawn_ = false;
+   cc::UsePaintCache path2d_use_paint_cache_;
+   mojom::blink::ColorScheme color_scheme_ = mojom::blink::ColorScheme::kLight;
+   // Cache of recently used colors. Maintains LRU semantics.
+@@ -798,6 +803,8 @@ void Canvas2DRecorderContext::Draw(
+   if (!paint_canvas || !paint_canvas->getDeviceClipBounds(&clip_bounds)) {
+     return;
+   }
++  // MZ: 记录画布上做过真实绘制（文字、路径、矩形、图片），只有这类画布导出时才加 Canvas 噪声。
++  mz_has_drawn_ = true;
+ 
+   const CanvasRenderingContext2DState& state = GetState();
+   SkBlendMode global_composite = state.GlobalComposite();
+diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h
+--- a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h
++++ b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h
+@@ -195,6 +195,9 @@ class MODULES_EXPORT CanvasRenderingContext2D final
+ 
+   MemoryManagedPaintCanvas* GetOrCreatePaintCanvas() final;
+ 
++  // MZ: 只有做过真实绘制的画布导出时才加 Canvas 噪声。
++  bool MzShouldApplyCanvasNoise() const override { return MzHasDrawn(); }
++
+   void WillDraw(const gfx::Rect& dirty_rect,
+                 CanvasPerformanceMonitor::DrawType) final;
+ 
+diff --git a/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h b/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h
+--- a/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h
++++ b/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h
+@@ -93,6 +93,9 @@ class MODULES_EXPORT OffscreenCanvasRenderingContext2D final
+ 
+   MemoryManagedPaintCanvas* GetOrCreatePaintCanvas() final;
+ 
++  // MZ: 只有做过真实绘制的画布导出时才加 Canvas 噪声。
++  bool MzShouldApplyCanvasNoise() const override { return MzHasDrawn(); }
++
+   void WillDraw(const gfx::Rect& dirty_rect,
+                 CanvasPerformanceMonitor::DrawType) final;
+ 

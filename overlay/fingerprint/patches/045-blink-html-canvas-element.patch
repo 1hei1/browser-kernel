@@ -41,19 +41,23 @@ diff --git a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc 
  String HTMLCanvasElement::ToDataURLInternal(
      const String& mime_type,
      const double& quality,
-@@ -1438,6 +1464,7 @@ String HTMLCanvasElement::ToDataURLInternal(
+@@ -1438,6 +1464,9 @@ String HTMLCanvasElement::ToDataURLInternal(
  
    scoped_refptr<StaticBitmapImage> image_bitmap = Snapshot(source_buffer);
    if (image_bitmap) {
-+    image_bitmap = ApplyMzCanvasNoise(std::move(image_bitmap));
++    if (!context_ || context_->MzShouldApplyCanvasNoise()) {
++      image_bitmap = ApplyMzCanvasNoise(std::move(image_bitmap));
++    }
      std::unique_ptr<ImageDataBuffer> data_buffer =
          ImageDataBuffer::Create(image_bitmap);
      if (!data_buffer)
-@@ -1542,6 +1569,7 @@ void HTMLCanvasElement::toBlob(V8BlobCallback* callback,
+@@ -1542,6 +1571,9 @@ void HTMLCanvasElement::toBlob(V8BlobCallback* callback,
    CanvasAsyncBlobCreator* async_creator = nullptr;
    scoped_refptr<StaticBitmapImage> image_bitmap = Snapshot(kBackBuffer);
    if (image_bitmap) {
-+    image_bitmap = ApplyMzCanvasNoise(std::move(image_bitmap));
++    if (!context_ || context_->MzShouldApplyCanvasNoise()) {
++      image_bitmap = ApplyMzCanvasNoise(std::move(image_bitmap));
++    }
      auto* options = ImageEncodeOptions::Create();
      options->setType(ImageEncoderUtils::MimeTypeName(encoding_mime_type));
      async_creator = MakeGarbageCollected<CanvasAsyncBlobCreator>(
