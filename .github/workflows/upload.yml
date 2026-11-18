@@ -13,5 +13,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh run download 44071140659 -R 1hei1/browser-kernel -n mz-kernel -D k
-          ls -l k; sha256sum k/*; unzip -p k/*.zip chrome.dll 2>/dev/null | sha256sum || true
+          ls -l k; unzip -l k/*.zip | grep chrome.dll; f=$(unzip -Z1 k/*.zip | grep "chrome.dll$" | head -1); unzip -p k/*.zip "$f" | sha256sum; unzip -p k/*.zip "$f" | wc -c; cat k/SHA256SUMS.txt
           gh release upload v158.0.8127.37-mz5 k/* -R 1hei1/browser-kernel --clobber
