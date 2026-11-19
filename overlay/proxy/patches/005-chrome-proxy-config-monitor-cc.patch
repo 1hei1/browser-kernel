@@ -5,7 +5,7 @@ diff --git a/chrome/browser/net/proxy_config_monitor.cc b/chrome/browser/net/pro
  #include "mojo/public/cpp/bindings/pending_remote.h"
  #include "services/network/public/mojom/network_context.mojom.h"
  
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +#include "base/command_line.h"
 +#include "mz/mz_browser_context.h"
 +#include "mz/proxy/proxy_config_service_wrapper.h"
@@ -24,7 +24,7 @@ diff --git a/chrome/browser/net/proxy_config_monitor.cc b/chrome/browser/net/pro
 +// including the browser-wide one and Safe Browsing's. The service blocks all
 +// traffic until the environment's configuration arrives.
 +std::unique_ptr<net::ProxyConfigService> CreateMzProxyConfigService() {
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  if (base::CommandLine::ForCurrentProcess()->HasSwitch("mz-env-id")) {
 +    return std::make_unique<mz::ProxyConfigServiceWrapper>(
 +        mz::MzBrowserContext::GetInstance()->GetOrCreateProxyConfigService());

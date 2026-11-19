@@ -3,7 +3,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
 +++ b/chrome/browser/chrome_browser_main.cc
 @@ -148,6 +148,7 @@
  
- #if BUILDFLAG(IS_WIN)
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
  #include "mz/eventbus/eventbus.h"
 +#include "mz/auth/startup_auth_checker.h"
  #endif
@@ -12,7 +12,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
 @@ -1739,14 +1740,21 @@ void ChromeBrowserMainParts::PostBrowserStart() {
    browser_process_->browser_policy_connector()->OnBrowserStarted();
  
- #if BUILDFLAG(IS_WIN)
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 -  // Initialize MZ EventBus if env_id is provided
 +  // MZ 认证检查：确保只有通过 Tauri 启动且已登录的用户才能使用浏览器
    {

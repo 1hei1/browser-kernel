@@ -18,6 +18,9 @@ source_set("eventbus") {
   if (is_win) {
     sources += [ "transport_win.cc" ]
   }
+  if (is_posix) {
+    sources += [ "transport_posix.cc" ]
+  }
 
   deps = [
     "//base",

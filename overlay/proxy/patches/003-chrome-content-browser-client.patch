@@ -45,7 +45,7 @@ diff --git a/chrome/browser/chrome_content_browser_client.cc b/chrome/browser/ch
      bool do_not_prompt_for_login,
      content::GuestPageHolder* guest,
      content::LoginDelegate::LoginAuthRequiredCallback auth_required_callback) {
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  if (base::CommandLine::ForCurrentProcess()->HasSwitch("mz-env-id") &&
 +      auth_info.is_proxy) {
 +    LOG(INFO) << "Intercepted proxy auth challenge for MZ browser";
