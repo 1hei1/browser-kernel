@@ -12,6 +12,26 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 44245758407 -R 1hei1/browser-kernel -n mz-kernel -D k
-          ls -l k; unzip -l k/*.zip | grep chrome.dll; f=$(unzip -Z1 k/*.zip | grep "chrome.dll$" | head -1); unzip -p k/*.zip "$f" | sha256sum; unzip -p k/*.zip "$f" | wc -c; cat k/SHA256SUMS.txt
-          gh release upload v158.0.8127.37-mz7 k/* -R 1hei1/browser-kernel --clobber
+          gh run download 44510812810 -R 1hei1/browser-kernel -n mz-kernel-linux -D k
+          ls -l k
+          z=$(ls k/*.zip 2>/dev/null | head -1)
+          if [ -z "$z" ]; then
+            t=$(ls k/*.tar.xz | head -1); mkdir x; tar xf "$t" -C x; ls x
+            d=$(ls -d x/*/ | head -1); [ -f "$d/chrome" ] && mv "$d/chrome" "$d/mz"
+            python3 - "$d" <<'PY'
+          import sys,os,zipfile
+          d=sys.argv[1]
+          with zipfile.ZipFile('k/mz-browser-kernel-158.0.8127.37-linux-x64.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for r,_,fs in os.walk(d):
+                  for f in fs:
+                      p=os.path.join(r,f); z.write(p,os.path.relpath(p,d))
+          PY
+            z=k/mz-browser-kernel-158.0.8127.37-linux-x64.zip
+          fi
+          [ "$z" != k/mz-browser-kernel-158.0.8127.37-linux-x64.zip ] && cp "$z" k/mz-browser-kernel-158.0.8127.37-linux-x64.zip
+          z=k/mz-browser-kernel-158.0.8127.37-linux-x64.zip
+          unzip -Z1 $z | head -5; unzip -Z $z mz | head -2
+          echo ZIPSHA $(sha256sum $z | cut -d' ' -f1) SIZE $(stat -c%s $z)
+          echo MZSHA $(unzip -p $z mz | sha256sum | cut -d' ' -f1)
+          gh release view v158.0.8127.37-mz7-linux -R 1hei1/browser-kernel >/dev/null 2>&1 || gh release create v158.0.8127.37-mz7-linux -R 1hei1/browser-kernel -t "MZ kernel 158.0.8127.37 mz7 linux" -n "Linux x64 headless kernel"
+          gh release upload v158.0.8127.37-mz7-linux $z -R 1hei1/browser-kernel --clobber
