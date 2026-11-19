@@ -2,7 +2,7 @@
 
 工作流：`.github/workflows/mz-linux-build.yml`（由 `ci/linux/gen_workflow.py` 生成）。流程同 `ci/win`：
 stage-1 拉 Chromium、`install-build-deps.sh`、runhooks → `ci/linux/args.gn` + driver apply-and-prepare → gn gen → ninja；
-超时就把工作树（去掉 .git）打成 tar.zst 传给下一段；编完打包 `mz-browser-kernel-<ver>-linux-x64.tar.xz`。
+超时就把工作树（去掉 .git）打成 tar.zst 传给下一段；编完打包 `mz-browser-kernel-<ver>-linux-x64.zip`。
 编译出错同样保留工作树，修好后放进 `ci/linux/fixups/`，用 `resume_run_id` 续编。
 
 运行时（服务器上）：

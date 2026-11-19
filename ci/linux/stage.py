@@ -6,7 +6,7 @@ Subcommands (all run on a GitHub-hosted ubuntu runner):
   prepare   write out/Default/args.gn, run the MZ driver (apply + deploy), gn gen
   build     run ninja until it finishes or the time budget for this job runs out
   fixups    apply ci/linux/fixups to a restored tree (resume after a failed stage)
-  package   collect the runtime files of out/Default into mz-browser-kernel-<ver>-linux-x64.tar.xz
+  package   collect the runtime files of out/Default into mz-browser-kernel-<ver>-linux-x64.zip
 
 Layout under $MZ_WORK (chosen by the workflow):
   depot_tools/        chromium/.gclient   chromium/src/   dist/
@@ -21,7 +21,7 @@ import shutil
 import signal
 import subprocess
 import sys
-import tarfile
+import zipfile
 import time
 from pathlib import Path
 
@@ -287,37 +287,44 @@ def sha256(path: Path) -> str:
 
 
 def cmd_package(_args) -> None:
+    """打成和 Windows 包同样结构的 zip：文件都在根目录，主程序叫 mz（应用按这个名字找），
+    zip 里保留 unix 权限位（应用解压时还原可执行位）。"""
     if not (OUT / "chrome").exists():
         raise SystemExit("out/Default/chrome missing")
     dist = WORK / "dist"
     shutil.rmtree(dist, ignore_errors=True)
-    stage = dist / "mz-browser-kernel"
+    stage = dist / "stage"
     stage.mkdir(parents=True)
     for name in RUNTIME_FILES:
         p = OUT / name
         if p.exists():
-            shutil.copy2(p, stage / name)
+            shutil.copy2(p, stage / ("mz" if name == "chrome" else name))
     for name in RUNTIME_DIRS:
         p = OUT / name
         if p.is_dir():
             shutil.copytree(p, stage / name)
-    # strip 一下减小体积（symbol_level=0 时也还有部分符号）
-    for name in ("chrome", "chrome_crashpad_handler"):
-        subprocess.run(["strip", "--strip-unneeded", str(stage / name)], check=False)
+    for name in ("mz", "chrome_crashpad_handler"):
+        if (stage / name).exists():
+            subprocess.run(["strip", "--strip-unneeded", str(stage / name)], check=False)
     (stage / "VERSION").write_text(TAG + "\n", encoding="utf-8")
 
-    name = f"mz-browser-kernel-{TAG}-linux-x64.tar.xz"
-    path = dist / name
-    with tarfile.open(path, "w:xz", preset=6) as tar:
-        tar.add(stage, arcname="mz-browser-kernel")
+    zip_name = f"mz-browser-kernel-{TAG}-linux-x64.zip"
+    zip_path = dist / zip_name
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for p in sorted(stage.rglob("*")):
+            if p.is_file():
+                info = zipfile.ZipInfo.from_file(p, p.relative_to(stage).as_posix())
+                info.compress_type = zipfile.ZIP_DEFLATED
+                with p.open("rb") as f:
+                    z.writestr(info, f.read(), compresslevel=9)
     files = sorted(p.relative_to(stage).as_posix() for p in stage.rglob("*") if p.is_file())
-    summary("\n".join([f"## {name}", "",
-                       f"- SHA-256: `{sha256(path)}`",
-                       f"- chrome SHA-256: `{sha256(stage / 'chrome')}`",
-                       f"- size: {path.stat().st_size} bytes",
+    summary("\n".join([f"## {zip_name}", "",
+                       f"- zip SHA-256: `{sha256(zip_path)}`",
+                       f"- mz SHA-256 (signature): `{sha256(stage / 'mz')}`",
+                       f"- size: {zip_path.stat().st_size} bytes",
                        f"- files: {len(files)}", ""] +
                       [f"- `{f}`" for f in files if "/" not in f]))
-    (dist / "SHA256SUMS.txt").write_text(f"{sha256(path)}  {name}\n", encoding="utf-8")
+    (dist / "SHA256SUMS.txt").write_text(f"{sha256(zip_path)}  {zip_name}\n", encoding="utf-8")
 
 
 def main() -> None:
