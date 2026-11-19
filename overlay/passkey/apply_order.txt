@@ -1,0 +1,5 @@
+# 通行密钥单元补丁应用顺序
+001-device-virtual-ctap2-aaguid.patch
+002-content-virtual-authenticator.patch
+003-content-authenticator-environment.patch
+004-eventbus-passkey.patch

@@ -1,0 +1,56 @@
+diff --git a/content/browser/webauth/virtual_authenticator.cc b/content/browser/webauth/virtual_authenticator.cc
+index 11aa371..ae3b8b9 100644
+--- a/content/browser/webauth/virtual_authenticator.cc
++++ b/content/browser/webauth/virtual_authenticator.cc
+@@ -210,6 +210,14 @@ VirtualAuthenticator::ConstructDevice() {
+           device::CoseAlgorithmIdentifier::kMlDsa87,
+           device::CoseAlgorithmIdentifier::kRs256,
+       };
++      if (mz_platform_authenticator_) {
++        // MZ: 平台验证器风格的设备参数
++        config.none_attestation = true;
++        config.mz_aaguid = mz_aaguid_;
++        config.resident_credential_storage = 100000;
++        config.transports_in_get_info = {
++            device::FidoTransportProtocol::kInternal};
++      }
+       return std::make_unique<device::VirtualCtap2Device>(state_, config);
+     }
+     default:
+diff --git a/content/browser/webauth/virtual_authenticator.h b/content/browser/webauth/virtual_authenticator.h
+index 359ded6..e9a678d 100644
+--- a/content/browser/webauth/virtual_authenticator.h
++++ b/content/browser/webauth/virtual_authenticator.h
+@@ -5,6 +5,7 @@
+ #ifndef CONTENT_BROWSER_WEBAUTH_VIRTUAL_AUTHENTICATOR_H_
+ #define CONTENT_BROWSER_WEBAUTH_VIRTUAL_AUTHENTICATOR_H_
+ 
++#include <array>
+ #include <memory>
+ #include <optional>
+ #include <string>
+@@ -157,6 +158,14 @@ class CONTENT_EXPORT VirtualAuthenticator
+   device::FidoTransportProtocol transport() const { return state_->transport; }
+   const std::string& unique_id() const { return unique_id_; }
+ 
++  // MZ: 标记为 MZ 每环境软件平台验证器：返回 "none" 证明但带 AAGUID（不设置时用
++  // Windows Hello 的 AAGUID 由调用方传入），getInfo 只报告 internal，凭据容量不设上限。
++  void SetMzPlatformAuthenticator(
++      std::optional<std::array<uint8_t, device::kAaguidLength>> aaguid) {
++    mz_platform_authenticator_ = true;
++    mz_aaguid_ = aaguid;
++  }
++
+   bool is_user_verifying_platform_authenticator() const {
+     return attachment_ == device::AuthenticatorAttachment::kPlatform &&
+            has_user_verification_;
+@@ -236,6 +245,9 @@ class CONTENT_EXPORT VirtualAuthenticator
+   const bool has_hmac_secret_mc_;
+   const bool has_cmtg_key_;
+   bool is_user_verified_ = true;
++  // MZ: 见 SetMzPlatformAuthenticator()
++  bool mz_platform_authenticator_ = false;
++  std::optional<std::array<uint8_t, device::kAaguidLength>> mz_aaguid_;
+   const std::string unique_id_;
+   bool is_user_present_;
+   base::ObserverList<Observer> observers_;

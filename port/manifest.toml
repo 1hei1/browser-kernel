@@ -68,3 +68,9 @@ id = "account-totp"
 overlay = "totp"
 state = "legacy-patch"
 requires = ["eventbus-input-sync", "account-import", "new-tab-page"]
+
+[[capabilities]]
+id = "env-passkey"
+overlay = "passkey"
+state = "legacy-patch"
+requires = ["eventbus-input-sync", "account-totp"]

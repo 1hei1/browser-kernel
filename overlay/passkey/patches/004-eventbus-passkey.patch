@@ -1,0 +1,177 @@
+diff --git a/mz/eventbus/eventbus.cc b/mz/eventbus/eventbus.cc
+index 1c4f8a7..974782f 100644
+--- a/mz/eventbus/eventbus.cc
++++ b/mz/eventbus/eventbus.cc
+@@ -4,6 +4,11 @@
+ #include "mz/eventbus/eventbus.h"
+ 
+ #include "mz/totp/totp_store.h"
++// MZ 通行密钥：每环境软件平台验证器
++#include "base/base64url.h"
++#include "base/json/json_writer.h"
++#include "base/strings/string_number_conversions.h"
++#include "content/public/browser/mz_passkey.h"
+ 
+ #include <algorithm>
+ #include <atomic>
+@@ -73,6 +78,116 @@ std::atomic<int> g_sync_role{0};
+ constexpr int kOpenUrlsRetryCount = 50;
+ constexpr base::TimeDelta kOpenUrlsRetryDelay = base::Milliseconds(100);
+ 
++// ===== MZ 通行密钥 =====
++// 应用下发 / 内核上报的凭据都用 JSON，二进制字段为无填充的 base64url。
++
++std::string MzPasskeyBase64Url(const std::vector<uint8_t>& data) {
++  std::string out;
++  base::Base64UrlEncode(data, base::Base64UrlEncodePolicy::OMIT_PADDING, &out);
++  return out;
++}
++
++std::vector<uint8_t> MzPasskeyFromBase64Url(const std::string* value) {
++  if (!value || value->empty()) {
++    return {};
++  }
++  std::optional<std::vector<uint8_t>> decoded = base::Base64UrlDecode(
++      *value, base::Base64UrlDecodePolicy::IGNORE_PADDING);
++  return decoded ? std::move(*decoded) : std::vector<uint8_t>();
++}
++
++std::string MzPasskeyString(const base::DictValue& dict, const char* key) {
++  const std::string* value = dict.FindString(key);
++  return value ? *value : std::string();
++}
++
++// AAGUID：32 位十六进制，可带 "-"
++bool MzParsePasskeyAaguid(const std::string& input,
++                          std::array<uint8_t, 16>* out) {
++  std::string hex;
++  for (char c : input) {
++    if (c != '-') {
++      hex.push_back(c);
++    }
++  }
++  return hex.size() == 32 && base::HexStringToSpan(hex, *out);
++}
++
++std::vector<content::mz_passkey::Credential> MzParseLaunchPasskeys(
++    const base::ListValue& list) {
++  std::vector<content::mz_passkey::Credential> credentials;
++  for (const base::Value& item : list) {
++    if (!item.is_dict()) {
++      continue;
++    }
++    const base::DictValue& dict = item.GetDict();
++    content::mz_passkey::Credential credential;
++    credential.credential_id =
++        MzPasskeyFromBase64Url(dict.FindString("credential_id"));
++    credential.rp_id = MzPasskeyString(dict, "rp_id");
++    credential.user_handle =
++        MzPasskeyFromBase64Url(dict.FindString("user_handle"));
++    credential.user_name = MzPasskeyString(dict, "user_name");
++    credential.user_display_name = MzPasskeyString(dict, "user_display_name");
++    credential.private_key_pkcs8 =
++        MzPasskeyFromBase64Url(dict.FindString("private_key"));
++    const double sign_count = dict.FindDouble("sign_count").value_or(0);
++    credential.sign_count =
++        sign_count > 0 && sign_count < 4294967295.0
++            ? static_cast<uint32_t>(sign_count)
++            : 0u;
++    credential.created_at_ms =
++        static_cast<int64_t>(dict.FindDouble("created_at").value_or(0));
++    credential.discoverable = dict.FindBool("discoverable").value_or(true);
++    if (credential.credential_id.empty() || credential.rp_id.empty() ||
++        credential.private_key_pkcs8.empty()) {
++      continue;
++    }
++    credentials.push_back(std::move(credential));
++  }
++  return credentials;
++}
++
++// 内核上报凭据变化（UI 线程）。私钥只经本机命名管道发给 MZ 应用，由应用加密落盘。
++void MzSendPasskeyChange(content::mz_passkey::Change change,
++                         const content::mz_passkey::Credential& credential) {
++  base::DictValue dict;
++  const char* action = "updated";
++  if (change == content::mz_passkey::Change::kCreated) {
++    action = "created";
++  } else if (change == content::mz_passkey::Change::kDeleted) {
++    action = "deleted";
++  }
++  dict.Set("action", action);
++  dict.Set("credential_id", MzPasskeyBase64Url(credential.credential_id));
++  if (change != content::mz_passkey::Change::kDeleted) {
++    dict.Set("rp_id", credential.rp_id);
++    dict.Set("user_handle", MzPasskeyBase64Url(credential.user_handle));
++    dict.Set("user_name", credential.user_name);
++    dict.Set("user_display_name", credential.user_display_name);
++    dict.Set("private_key", MzPasskeyBase64Url(credential.private_key_pkcs8));
++    dict.Set("sign_count", static_cast<double>(credential.sign_count));
++    dict.Set("created_at", static_cast<double>(credential.created_at_ms));
++    dict.Set("discoverable", credential.discoverable);
++  }
++  std::optional<std::string> json = base::WriteJson(dict);
++  if (!json) {
++    return;
++  }
++  const bool sent = EventBus::GetInstance().SendEvent(
++      Topic::kPasskeyChanged, std::vector<uint8_t>(json->begin(), json->end()));
++  LOG(INFO) << "[MZ][Passkey] 凭据" << action << " rp=" << credential.rp_id
++            << (sent ? " 已上报" : " 上报失败（EventBus 未连接）");
++}
++
++void MzEnablePasskeys(std::vector<content::mz_passkey::Credential> credentials,
++                      content::mz_passkey::Options options) {
++  content::mz_passkey::EnablePlatformAuthenticator(
++      std::move(credentials), options,
++      base::BindRepeating(&MzSendPasskeyChange));
++}
++// ===== MZ 通行密钥结束 =====
++
+ struct CookieSiteTarget {
+   std::string site_input;
+   std::string domain;
+@@ -1177,6 +1292,31 @@ void EventBus::HandleHandshakeResponse(const Message& message) {
+     }
+     mz::totp::SetAccounts(std::move(totp_accounts));
+ 
++    // 通行密钥：配置里带 passkeys（可为空数组）时启用每环境软件平台验证器，
++    // 替代 Windows Hello；旧版应用不发这个字段，行为不变
++    if (const base::ListValue* passkeys = config.FindList("passkeys")) {
++      std::vector<content::mz_passkey::Credential> passkey_credentials =
++          MzParseLaunchPasskeys(*passkeys);
++      content::mz_passkey::Options passkey_options;
++      passkey_options.show_ui =
++          !config.FindBool("passkey_silent").value_or(false);
++      if (const std::string* aaguid = config.FindString("passkey_aaguid")) {
++        std::array<uint8_t, 16> aaguid_bytes;
++        if (MzParsePasskeyAaguid(*aaguid, &aaguid_bytes)) {
++          passkey_options.aaguid = aaguid_bytes;
++        }
++      }
++      MZ_LOG("LaunchConfig: 通行密钥 " << passkey_credentials.size() << " 条");
++      if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
++        MzEnablePasskeys(std::move(passkey_credentials), passkey_options);
++      } else {
++        content::GetUIThreadTaskRunner({})->PostTask(
++            FROM_HERE, base::BindOnce(&MzEnablePasskeys,
++                                      std::move(passkey_credentials),
++                                      passkey_options));
++      }
++    }
++
+     if (!launch_cookies.empty() || !csv_passwords.empty()) {
+       content::GetUIThreadTaskRunner({})->PostTask(
+           FROM_HERE,
+diff --git a/mz/eventbus/topics.h b/mz/eventbus/topics.h
+index 5de0331..ff4ea20 100644
+--- a/mz/eventbus/topics.h
++++ b/mz/eventbus/topics.h
+@@ -53,6 +53,7 @@ enum class Topic : uint16_t {
+ 
+   // ========== 启动配置 (0x0900 - 0x09FF) ==========
+   kLaunchConfig = 0x0900,  // 启动配置：Tauri 在握手后发送给浏览器
++  kPasskeyChanged = 0x0901,  // 通行密钥变化：浏览器新建/更新/删除凭据时发给 Tauri 持久化
+ };
+ 
+ // 消息类型
