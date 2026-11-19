@@ -21,7 +21,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
  void ChromeBrowserMainParts::PreProfileInit() {
    TRACE_EVENT0("startup", "ChromeBrowserMainParts::PreProfileInit");
  
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  // Initialize MZ browser context early, before profiles are created
 +  // This ensures proxy configuration is available when ProfileNetworkContextService is created
 +  mz::MzBrowserContext::GetInstance()->Initialize();
@@ -43,7 +43,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
 @@ -1740,20 +1758,12 @@ void ChromeBrowserMainParts::PostBrowserStart() {
    browser_process_->browser_policy_connector()->OnBrowserStarted();
  
- #if BUILDFLAG(IS_WIN)
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 -  // MZ 认证检查：确保只有通过 Tauri 启动且已登录的用户才能使用浏览器
    {
      const base::CommandLine* command_line =
@@ -65,7 +65,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
      chrome_extra_part->PostMainMessageLoopRun();
    }
  
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  // Shutdown MZ browser context
 +  mz::MzBrowserContext::GetInstance()->Shutdown();
 +#endif

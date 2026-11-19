@@ -9,3 +9,12 @@ diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
        "//chrome/browser/win",
        "//mz/eventbus",
      ]
+@@ -3887,6 +3888,8 @@ source_set("browser") {
+   }
+   if (is_linux) {
+     deps += [
++      "//mz/auth",
++      "//mz/eventbus",
+       ":shell_integration_linux",
+       "//chrome/app/theme:chrome_unscaled_resources_grit",
+       "//chrome/browser/ui/views:eula_dialog_linux",
