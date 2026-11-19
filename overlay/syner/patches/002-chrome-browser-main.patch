@@ -5,7 +5,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
  #include "ui/color/color_provider_manager.h"
  #include "ui/gl/gl_switches.h"
  
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +#include "mz/eventbus/eventbus.h"
 +#endif
 +
@@ -16,7 +16,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
  
    browser_process_->browser_policy_connector()->OnBrowserStarted();
  
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  // Initialize MZ EventBus if env_id is provided
 +  {
 +    const base::CommandLine* command_line =
@@ -42,7 +42,7 @@ diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_brows
 +  // not finish.
    NOTREACHED();
  #else
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  // Shutdown MZ EventBus
 +  mz::eventbus::EventBus::GetInstance().Shutdown();
 +#endif

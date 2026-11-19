@@ -6,7 +6,7 @@ diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/brow
  #include "chrome/browser/webid/federated_identity_permission_context.h"
  #include "chrome/browser/webid/federated_identity_permission_context_factory.h"
 +
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +#include "mz/mz_browser_context.h"
 +#include "mz/proxy/network_context_configurator.h"
 +#include "mz/proxy/proxy_config_service_wrapper.h"
@@ -28,7 +28,7 @@ diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/brow
 +      base::CommandLine::ForCurrentProcess();
 +  bool is_mz = command_line->HasSwitch("mz-env-id");
 +
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  if (is_mz) {
 +    // Use MZ's custom proxy configuration service
 +    auto* mz_context = mz::MzBrowserContext::GetInstance();
@@ -58,7 +58,7 @@ diff --git a/chrome/browser/net/profile_network_context_service.cc b/chrome/brow
  
    proxy_config_monitor_->AddToNetworkContextParams(network_context_params);
  
-+#if BUILDFLAG(IS_WIN)
++#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 +  if (const base::CommandLine* mz_command_line =
 +          base::CommandLine::ForCurrentProcess();
 +      mz_command_line->HasSwitch("mz-env-id")) {

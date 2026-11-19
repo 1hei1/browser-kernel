@@ -16,6 +16,8 @@
 #include "base/threading/thread.h"
 #include "mz/eventbus/message.h"
 
+#include "build/build_config.h"
+
 #if BUILDFLAG(IS_WIN)
 #include <windows.h>
 #endif
@@ -120,6 +122,52 @@ class NamedPipeTransport : public Transport {
   std::unique_ptr<base::Thread> io_thread_;
 
   // 用于回调到主线程
+  scoped_refptr<base::SequencedTaskRunner> main_task_runner_;
+
+  SEQUENCE_CHECKER(main_sequence_checker_);
+};
+
+#elif BUILDFLAG(IS_POSIX)
+
+// POSIX Unix domain socket 传输实现（Linux 无界面服务器用）。
+// 套接字路径：$MZ_EVENTBUS_DIR/mz_<env_id>.sock，未设置时为 /tmp/mz_<env_id>.sock，
+// 由 mz-server 监听；字节流格式与 Windows 命名管道完全一致。
+class UnixSocketTransport : public Transport {
+ public:
+  UnixSocketTransport(const std::string& env_id, TransportDelegate* delegate);
+  ~UnixSocketTransport() override;
+
+  UnixSocketTransport(const UnixSocketTransport&) = delete;
+  UnixSocketTransport& operator=(const UnixSocketTransport&) = delete;
+
+  void Connect() override;
+  void Disconnect() override;
+  bool Send(const Message& message) override;
+  TransportState GetState() const override;
+  bool IsConnected() const override;
+
+ private:
+  void DoConnect();
+  void DoDisconnect();
+  void DoSend(std::vector<uint8_t> data);
+  void ScheduleRead();
+  void DoRead();
+  void CloseSocket();
+
+  void NotifyConnected();
+  void NotifyDisconnected();
+  void NotifyMessageReceived(Message message);
+  void NotifyError(const std::string& error);
+
+  std::string GetSocketPath() const;
+
+  std::string env_id_;
+  raw_ptr<TransportDelegate> delegate_;
+
+  int fd_ = -1;  // 只在 IO 线程上读写
+  TransportState state_ = TransportState::kDisconnected;
+  std::vector<uint8_t> read_buffer_;
+  std::unique_ptr<base::Thread> io_thread_;
   scoped_refptr<base::SequencedTaskRunner> main_task_runner_;
 
   SEQUENCE_CHECKER(main_sequence_checker_);
