@@ -144,6 +144,32 @@ def _deploy_theme_product_logos(ctx: DeployContext) -> None:
             print("  Warning: missing theme/chromium/%s (skipped)" % name)
 
 
+def _deploy_theme_missing_from_chromium(ctx: DeployContext) -> None:
+    """theme/chromium 下其余文件（如 linux/、mac/ 子目录）在 theme/{component} 中缺失时补齐（不覆盖已有）。
+    Linux 版 chrome_unscaled_resources.grd 引用 ${branding_path_component}/linux/product_logo_*.png；
+    其中 product_logo_<N>.png 若 overlay icons/all 有 <N>x<N>.png 则用品牌图标。"""
+    chromium_dir = ctx.theme / "chromium"
+    dst_dir = ctx.theme / ctx.component
+    if not chromium_dir.is_dir():
+        return
+    import re
+    for f in chromium_dir.rglob("*"):
+        if not f.is_file():
+            continue
+        d = dst_dir / f.relative_to(chromium_dir)
+        if d.exists():
+            continue
+        d.parent.mkdir(parents=True, exist_ok=True)
+        src = f
+        m = re.fullmatch(r"product_logo_(\d+)\.png", f.name)
+        if m and f.parent.name == "linux":
+            cand = ctx.kernel_icons_all / ("%sx%s.png" % (m.group(1), m.group(1)))
+            if cand.is_file():
+                src = cand
+        shutil.copy2(src, d)
+        print("  theme/%s/%s (from %s)" % (ctx.component, d.relative_to(dst_dir), "overlay" if src is not f else "chromium"))
+
+
 def _deploy_theme_scaled_resources(ctx: DeployContext) -> None:
     """将 default_100_percent/chromium、default_200_percent/chromium 复制为 default_*_percent/{component}；product_logo_32 优先从 overlay 映射覆盖。"""
     for scale_dir in ("default_100_percent", "default_200_percent"):
@@ -389,6 +415,7 @@ def run(chromium_src, kernel_root, project_root):
     _deploy_win_icons(ctx, icon_names, fallback)
     print("Deploying theme/%s/ product logos (chrome_unscaled_resources)..." % component)
     _deploy_theme_product_logos(ctx)
+    _deploy_theme_missing_from_chromium(ctx)
     print("Deploying theme/default_*_percent/%s (theme_resources scaled)..." % component)
     _deploy_theme_scaled_resources(ctx)
     print("Deploying theme/%s/win/tiles..." % component)
