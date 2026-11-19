@@ -1,0 +1,20 @@
+# Base GN args for the MZ kernel Linux x64 CI build (headless servers / agents).
+# Same feature set as ci/win/args.gn. The branding overlay's sync_gn_args appends
+# chrome_executable_name / is_mz_branded; stage.py then forces the executable name
+# back to "chrome" (Linux packaging targets hard-code it).
+target_os = "linux"
+target_cpu = "x64"
+is_debug = false
+is_component_build = false
+is_official_build = false
+chrome_pgo_phase = 0
+symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
+dcheck_always_on = false
+proprietary_codecs = true
+ffmpeg_branding = "Chrome"
+treat_warnings_as_errors = false
+use_siso = false
+use_qt5 = false
+use_qt6 = false

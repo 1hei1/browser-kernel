@@ -1,0 +1,27 @@
+name: MZ Linux build setup
+description: Job clock, free disk, work dir on /mnt, Python/uv
+runs:
+  using: composite
+  steps:
+    - name: Job clock, free disk, work dir
+      shell: bash
+      run: |
+        echo "MZ_JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+        # 预装的大件删掉，给 Chromium 腾空间
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/.ghcup /usr/share/swift || true
+        sudo docker image prune --all --force >/dev/null 2>&1 || true
+        # ninja 文件里是绝对路径，每一段都用同一个目录
+        if [ -d /mnt ] && [ "$(df --output=avail -BG /mnt | tail -1 | tr -dc 0-9)" -gt 60 ]; then work=/mnt/mzb; else work=$HOME/mzb; fi
+        sudo mkdir -p "$work" && sudo chown "$(id -u):$(id -g)" "$work"
+        echo "MZ_WORK=$work" >> "$GITHUB_ENV"
+        df -h / /mnt || true
+        echo "CPU cores: $(nproc)"; free -g
+        git config --global user.name mz-ci
+        git config --global user.email mz-ci@users.noreply.github.com
+        sudo apt-get update -qq && sudo apt-get install -y -qq zstd patch >/dev/null
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install uv
+      shell: bash
+      run: python -m pip install --quiet uv
